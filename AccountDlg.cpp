@@ -20,7 +20,8 @@
 #include "define.h"
 
 #include "AccountDlg.h"
-#include "mainDlg.h"
+#include "mainDlg.h"
+
 #include "global.h"
 #include "langpack.h"
 #include "utf.h"
@@ -109,7 +110,7 @@ BOOL AccountDlg::OnInitDialog()
 				   id == IDC_SYSLINK_DISPLAY_PASSWORD) {
 			ci.moveX = true;
 		} else if (id == IDC_ACCOUNT_LABEL || id == IDC_EDIT_SERVER || id == IDC_EDIT_PROXY ||
-				   id == IDC_EDIT_USERNAME || id == IDC_EDIT_DOMAIN || id == IDC_EDIT_LOGIN ||
+				   id == IDC_EDIT_USERNAME || id == IDC_EDIT_DOMAIN || id == IDC_EDIT_AUTHID ||
 				   id == IDC_EDIT_PASSWORD || id == IDC_EDIT_NAME || id == IDC_EDIT_VOICEMAIL ||
 				   id == IDC_ACCOUNT_DIALING_PREFIX || id == IDC_ACCOUNT_DIAL_PLAN ||
 				   id == IDC_SRTP || id == IDC_TRANSPORT || id == IDC_PUBLIC_ADDR) {
