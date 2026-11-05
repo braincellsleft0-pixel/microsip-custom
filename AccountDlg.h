@@ -1,3 +1,4 @@
+﻿#include <afxbutton.h>
 #include <vector>
 
 /*
@@ -59,6 +60,10 @@ public:
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	void UpdateControlPositions();
+	CMFCButton m_btnSave;
+	CMFCButton m_btnCancel;
+	CMFCButton m_btnRemove;
 
 private:
 	CSize m_szMin;

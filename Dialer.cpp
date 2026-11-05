@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,10 @@ void Dialer::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_KEY_PLUS, m_ButtonDialerPlus);
 	DDX_Control(pDX, IDC_CLEAR, m_ButtonDialerClear);
 	DDX_Control(pDX, IDC_CALL, m_ButtonCall);
+	DDX_Control(pDX, IDC_VIDEO_CALL, m_ButtonVideo);
+	DDX_Control(pDX, IDC_MESSAGE, m_ButtonChat);
+	DDX_Control(pDX, IDC_BUTTON_MUTE_INPUT, m_ButtonMuteInput);
+	DDX_Control(pDX, IDC_BUTTON_MUTE_OUTPUT, m_ButtonMuteOutput);
 	DDX_Control(pDX, IDC_END, m_ButtonEnd);
 }
 
@@ -304,6 +308,15 @@ BOOL Dialer::OnInitDialog()
 	CBaseDialog::OnInitDialog();
 	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
 	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
+	m_ButtonVideo.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonVideo.m_bTransparent = FALSE;
+	m_ButtonChat.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonChat.m_bTransparent = FALSE;
+	m_ButtonMuteInput.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonMuteInput.m_bTransparent = FALSE;
+	m_ButtonMuteOutput.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonMuteOutput.m_bTransparent = FALSE;
+	UpdateButtonsDarkTheme();
 
 	if (langPack.rtl) {
 		m_SliderCtrlOutput.ModifyStyleEx(0, WS_EX_LAYOUTRTL);
@@ -1705,3 +1718,29 @@ void Dialer::OnBnClickedShortcut(UINT nID)
 	}
 }
 
+
+void Dialer::UpdateButtonsDarkTheme()
+{
+	COLORREF bg = accountSettings.darkMode ? RGB(45, 45, 45) : RGB(240, 240, 240);
+	COLORREF txt = accountSettings.darkMode ? RGB(220, 220, 220) : RGB(0, 0, 0);
+	if (m_ButtonVideo.m_hWnd) {
+		m_ButtonVideo.SetFaceColor(bg);
+		m_ButtonVideo.SetTextColor(txt);
+		m_ButtonVideo.Invalidate();
+	}
+	if (m_ButtonChat.m_hWnd) {
+		m_ButtonChat.SetFaceColor(bg);
+		m_ButtonChat.SetTextColor(txt);
+		m_ButtonChat.Invalidate();
+	}
+	if (m_ButtonMuteInput.m_hWnd) {
+		m_ButtonMuteInput.SetFaceColor(bg);
+		m_ButtonMuteInput.SetTextColor(txt);
+		m_ButtonMuteInput.Invalidate();
+	}
+	if (m_ButtonMuteOutput.m_hWnd) {
+		m_ButtonMuteOutput.SetFaceColor(bg);
+		m_ButtonMuteOutput.SetTextColor(txt);
+		m_ButtonMuteOutput.Invalidate();
+	}
+}

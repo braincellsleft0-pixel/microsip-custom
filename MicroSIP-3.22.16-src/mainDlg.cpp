@@ -1,3 +1,52 @@
+﻿
+BEGIN_MESSAGE_MAP(CDarkStatusBar, CStatusBar)
+	ON_WM_ERASEBKGND()
+	ON_WM_PAINT()
+END_MESSAGE_MAP()
+
+BOOL CDarkStatusBar::OnEraseBkgnd(CDC* pDC)
+{
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
+	return CStatusBar::OnEraseBkgnd(pDC);
+}
+
+void CDarkStatusBar::OnPaint()
+{
+	if (!accountSettings.darkMode) {
+		CStatusBar::OnPaint();
+		return;
+	}
+	CPaintDC dc(this);
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	dc.FillSolidRect(&rcClient, RGB(32, 32, 32));
+	dc.SetBkMode(TRANSPARENT);
+	dc.SetTextColor(RGB(220, 220, 220));
+
+	CFont* pFont = GetFont();
+	CFont* pOldFont = pFont ? dc.SelectObject(pFont) : NULL;
+
+	int count = GetStatusBarCtrl().GetParts(0, NULL);
+	for (int i = 0; i < count; i++) {
+		CRect rcPane;
+		GetItemRect(i, &rcPane);
+		HICON hIcon = (HICON)GetStatusBarCtrl().GetIcon(i);
+		if (hIcon) {
+			DrawIconEx(dc.m_hDC, rcPane.left + 2, rcPane.top + (rcPane.Height() - 16) / 2, hIcon, 16, 16, 0, NULL, DI_NORMAL);
+			rcPane.left += 20;
+		}
+		CString text = GetPaneText(i);
+		if (!text.IsEmpty()) {
+			dc.DrawText(text, &rcPane, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		}
+	}
+	if (pOldFont) dc.SelectObject(pOldFont);
+}
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -1590,6 +1639,7 @@ void CmainDlg::DoDataExchange(CDataExchange* pDX)
 	CBaseDialog::DoDataExchange(pDX);
 	//	DDX_Control(pDX, IDD_MAIN, *mainDlg);
 	DDX_Control(pDX, IDC_MAIN_MENU, m_ButtonMenu);
+	DDX_Control(pDX, IDC_MAIN_TAB, m_tabMain);
 	DDX_Control(pDX, IDC_DARK_MODE_BTN, m_ButtonDarkMode);
 }
 
@@ -2007,7 +2057,12 @@ BOOL CmainDlg::OnInitDialog()
 	AutoMove(tab->m_hWnd, 0, 0, 100, 0);
 	AutoMove(m_ButtonMenu.m_hWnd, 100, 0, 0, 0);
 	AutoMove(m_ButtonDarkMode.m_hWnd, 100, 0, 0, 0);
-	m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
+	m_ButtonDarkMode.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonDarkMode.m_bTransparent = FALSE;
+	m_ButtonMenu.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonMenu.m_bTransparent = FALSE;
+	m_tabMain.m_bCloseable = false;
+	UpdateThemeButtonUI();
 
 	BYTE offset = tabRect.bottom - 1;
 	CRect pageRect;
@@ -5485,12 +5540,29 @@ void CmainDlg::Unsubscribe()
 }
 
 
+void CmainDlg::UpdateThemeButtonUI()
+{
+	if (!m_ButtonDarkMode.m_hWnd) return;
+	if (accountSettings.darkMode) {
+		m_ButtonDarkMode.SetWindowText(_T("Light"));
+		m_ButtonDarkMode.SetFaceColor(RGB(50, 50, 50));
+		m_ButtonDarkMode.SetTextColor(RGB(240, 240, 240));
+		m_ButtonMenu.SetFaceColor(RGB(50, 50, 50));
+		m_ButtonMenu.SetTextColor(RGB(240, 240, 240));
+	} else {
+		m_ButtonDarkMode.SetWindowText(_T("Dark"));
+		m_ButtonDarkMode.SetFaceColor(RGB(235, 235, 235));
+		m_ButtonDarkMode.SetTextColor(RGB(0, 0, 0));
+		m_ButtonMenu.SetFaceColor(RGB(235, 235, 235));
+		m_ButtonMenu.SetTextColor(RGB(0, 0, 0));
+	}
+	m_ButtonDarkMode.Invalidate();
+	m_ButtonMenu.Invalidate();
+}
+
 void CmainDlg::OnBnClickedDarkMode()
 {
 	OnMenuDarkMode();
-	if (m_ButtonDarkMode.m_hWnd) {
-		m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
-	}
 }
 
 void CmainDlg::OnMenuDarkMode()
@@ -5498,38 +5570,52 @@ void CmainDlg::OnMenuDarkMode()
 	accountSettings.darkMode = !accountSettings.darkMode;
 	AccountSettingsPendingSave();
 	ApplyDarkMode(accountSettings.darkMode);
-	if (m_ButtonDarkMode.m_hWnd) {
-		m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
-	}
+	UpdateThemeButtonUI();
 }
 
 void CmainDlg::ApplyDarkMode(bool enable)
 {
 	msip_set_window_dark_mode(m_hWnd, enable);
 	if (m_bar.m_hWnd) {
-		m_bar.GetStatusBarCtrl().SetBkColor(enable ? RGB(32, 32, 32) : CLR_DEFAULT);
+		SetWindowTheme(m_bar.m_hWnd, enable ? L"" : NULL, enable ? L"" : NULL);
 		m_bar.Invalidate();
+	}
+	if (m_tabMain.m_hWnd) {
+		SetWindowTheme(m_tabMain.m_hWnd, enable ? L"" : NULL, enable ? L"" : NULL);
+		m_tabMain.Invalidate();
 	}
 	if (pageDialer && pageDialer->m_hWnd) {
 		msip_set_window_dark_mode(pageDialer->m_hWnd, enable);
+		pageDialer->UpdateButtonsDarkTheme();
 		pageDialer->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 	if (pageCalls && pageCalls->m_hWnd) {
+		pageCalls->m_SortItemsExListCtrl.SetBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
+		pageCalls->m_SortItemsExListCtrl.SetTextBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
+		pageCalls->m_SortItemsExListCtrl.SetTextColor(enable ? RGB(220, 220, 220) : RGB(0, 0, 0));
+		SetWindowTheme(pageCalls->m_SortItemsExListCtrl.m_hWnd, enable ? L"DarkMode_Explorer" : NULL, NULL);
 		msip_set_window_dark_mode(pageCalls->m_hWnd, enable);
 		pageCalls->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 	if (pageContacts && pageContacts->m_hWnd) {
+		pageContacts->m_SortItemsExListCtrl.SetBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
+		pageContacts->m_SortItemsExListCtrl.SetTextBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
+		pageContacts->m_SortItemsExListCtrl.SetTextColor(enable ? RGB(220, 220, 220) : RGB(0, 0, 0));
+		SetWindowTheme(pageContacts->m_SortItemsExListCtrl.m_hWnd, enable ? L"DarkMode_Explorer" : NULL, NULL);
 		msip_set_window_dark_mode(pageContacts->m_hWnd, enable);
 		pageContacts->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 	if (messagesDlg && messagesDlg->m_hWnd) {
 		msip_set_window_dark_mode(messagesDlg->m_hWnd, enable);
+		messagesDlg->UpdateMuteButton();
+		messagesDlg->UpdateHoldButton(NULL);
 		messagesDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 	if (accountDlg && accountDlg->m_hWnd) {
 		msip_set_window_dark_mode(accountDlg->m_hWnd, enable);
 		accountDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
+	UpdateThemeButtonUI();
 	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
 

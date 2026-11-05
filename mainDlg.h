@@ -1,3 +1,4 @@
+﻿#include <afxbutton.h>
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -70,8 +71,10 @@ public:
 	enum { IDD = IDD_MAIN };
 
 	bool m_startMinimized;
-	CButton m_ButtonMenu;
-	CButton m_ButtonDarkMode;
+	CMFCButton m_ButtonMenu;
+	CMFCButton m_ButtonDarkMode;
+	CClosableTabCtrl m_tabMain;
+	void UpdateThemeButtonUI();
 	afx_msg void OnBnClickedDarkMode();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	SettingsDlg* settingsDlg;

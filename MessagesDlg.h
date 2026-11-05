@@ -1,3 +1,4 @@
+﻿#include <afxbutton.h>
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -51,6 +52,8 @@ class MessagesDlg :
 public:
 	CButtonEx m_ButtonCall;
 	CButtonEx m_ButtonEnd;
+	CMFCButton m_ButtonMute;
+	CMFCButton m_ButtonHold;
 	MessagesDlg(CWnd* pParent = NULL);	// standard constructor
 	~MessagesDlg();
 	enum { IDD = IDD_MESSAGES };

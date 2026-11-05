@@ -1,4 +1,4 @@
-#include "settings.h"
+﻿#include "settings.h"
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *

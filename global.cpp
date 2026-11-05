@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1568,6 +1568,20 @@ void msip_startup_set(bool enable)
 #define DWMWA_USE_IMMERSIVE_DARK_MODE_OLD 19
 #endif
 
+static BOOL CALLBACK EnumSetDarkChild(HWND hWnd, LPARAM lParam)
+{
+	BOOL dark = (BOOL)lParam;
+	WCHAR className[64] = {0};
+	if (GetClassNameW(hWnd, className, 64)) {
+		if (_wcsicmp(className, L"SysListView32") == 0 ||
+			_wcsicmp(className, L"SysTreeView32") == 0 ||
+			_wcsicmp(className, L"ComboBox") == 0) {
+			SetWindowTheme(hWnd, dark ? L"DarkMode_Explorer" : NULL, NULL);
+		}
+	}
+	return TRUE;
+}
+
 void msip_set_window_dark_mode(HWND hWnd, BOOL dark)
 {
 	if (hWnd && ::IsWindow(hWnd)) {
@@ -1575,6 +1589,7 @@ void msip_set_window_dark_mode(HWND hWnd, BOOL dark)
 		if (FAILED(DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
 			DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, &val, sizeof(val));
 		}
+		EnumChildWindows(hWnd, EnumSetDarkChild, (LPARAM)dark);
 		::RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
 	}
 }

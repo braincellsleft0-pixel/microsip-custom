@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,8 @@ void MessagesDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MESSAGES_TAB, tabComponent);
 	DDX_Control(pDX, IDC_CALL_END, m_ButtonCall);
 	DDX_Control(pDX, IDC_END, m_ButtonEnd);
+	DDX_Control(pDX, IDC_CALL_MUTE, m_ButtonMute);
+	DDX_Control(pDX, IDC_HOLD, m_ButtonHold);
 }
 
 BOOL MessagesDlg::OnInitDialog()
@@ -194,6 +196,10 @@ BOOL MessagesDlg::OnInitDialog()
 	m_ButtonEnd.m_FaceColor = _GLOBAL_DIALER_END_COLOR;
 	m_ButtonEnd.m_TextColor = RGB(255, 255, 255);
 	m_ButtonEnd.EnableWindow(m_ButtonEnd.IsWindowEnabled());
+	m_ButtonMute.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonMute.m_bTransparent = FALSE;
+	m_ButtonHold.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_ButtonHold.m_bTransparent = FALSE;
 
 	return TRUE;
 }
@@ -1266,11 +1272,23 @@ void MessagesDlg::UpdateHoldButton(pjsua_call_info *call_info)
 			buttonHold->SetCheck(TRUE);
 			buttonHold->SetWindowText(_T("Resume"));
 			if (m_hIconResume) buttonHold->SetIcon(m_hIconResume);
+			if (m_ButtonHold.m_hWnd) {
+				m_ButtonHold.SetFaceColor(RGB(11, 91, 202));
+				m_ButtonHold.SetTextColor(RGB(255, 255, 255));
+				m_ButtonHold.Invalidate();
+			}
 		}
 		else {
 			buttonHold->SetCheck(FALSE);
 			buttonHold->SetWindowText(_T("Hold"));
 			if (m_hIconHold) buttonHold->SetIcon(m_hIconHold);
+			if (m_ButtonHold.m_hWnd) {
+				COLORREF bg = accountSettings.darkMode ? RGB(45, 45, 45) : RGB(240, 240, 240);
+				COLORREF txt = accountSettings.darkMode ? RGB(220, 220, 220) : RGB(0, 0, 0);
+				m_ButtonHold.SetFaceColor(bg);
+				m_ButtonHold.SetTextColor(txt);
+				m_ButtonHold.Invalidate();
+			}
 		}
 	}
 	if (buttonHoldDialer && buttonHoldDialer->GetSafeHwnd()) {
@@ -1764,6 +1782,18 @@ void MessagesDlg::UpdateMuteButton()
 		bool isMuted = (mc && mc->isMuted);
 		btn->SetCheck(isMuted ? BST_CHECKED : BST_UNCHECKED);
 		btn->SetWindowText(isMuted ? _T("Unmute") : _T("Mute"));
+		if (m_ButtonMute.m_hWnd) {
+			if (isMuted) {
+				m_ButtonMute.SetFaceColor(RGB(11, 91, 202));
+				m_ButtonMute.SetTextColor(RGB(255, 255, 255));
+			} else {
+				COLORREF bg = accountSettings.darkMode ? RGB(45, 45, 45) : RGB(240, 240, 240);
+				COLORREF txt = accountSettings.darkMode ? RGB(220, 220, 220) : RGB(0, 0, 0);
+				m_ButtonMute.SetFaceColor(bg);
+				m_ButtonMute.SetTextColor(txt);
+			}
+			m_ButtonMute.Invalidate();
+		}
 	}
 }
 

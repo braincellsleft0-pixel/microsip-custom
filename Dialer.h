@@ -1,3 +1,4 @@
+﻿#include <afxbutton.h>
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -136,6 +137,11 @@ public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	CBrush m_brDarkBg;
 	CBrush m_brDarkEdit;
+	CMFCButton m_ButtonVideo;
+	CMFCButton m_ButtonChat;
+	CMFCButton m_ButtonMuteInput;
+	CMFCButton m_ButtonMuteOutput;
+	void UpdateButtonsDarkTheme();
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedDND(); 

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "mainDlg.h"
 #include "ClosableTabCtrl.h"
 #include "VisualStylesXP.h"
@@ -29,6 +29,7 @@ BEGIN_MESSAGE_MAP(CClosableTabCtrl, CTabCtrl)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
+	ON_WM_PAINT()
 	ON_WM_MEASUREITEM()
 	ON_WM_MEASUREITEM_REFLECT()
 END_MESSAGE_MAP()
@@ -410,6 +411,9 @@ void CClosableTabCtrl::PreSubclassWindow()
 {
 	CTabCtrl::PreSubclassWindow();
 	InternalInit();
+	if (accountSettings.darkMode) {
+		SetWindowTheme(m_hWnd, L"", L"");
+	}
 }
 
 int CClosableTabCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -571,4 +575,55 @@ BOOL CClosableTabCtrl::DeleteItem(int nItem)
 bool CClosableTabCtrl::IsVistaThemeActive() const
 {
 	return g_xpStyle.IsThemeActive() && g_xpStyle.IsAppThemed();
+}
+
+void CClosableTabCtrl::OnPaint()
+{
+	if (!accountSettings.darkMode) {
+		CTabCtrl::OnPaint();
+		return;
+	}
+	CPaintDC dc(this);
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	dc.FillSolidRect(&rcClient, RGB(32, 32, 32));
+
+	int count = GetItemCount();
+	int curSel = GetCurSel();
+	CFont* pFont = GetFont();
+	CFont* pOldFont = pFont ? dc.SelectObject(pFont) : NULL;
+	dc.SetBkMode(TRANSPARENT);
+
+	for (int i = 0; i < count; i++) {
+		CRect rcItem;
+		GetItemRect(i, &rcItem);
+		bool bSelected = (i == curSel);
+		COLORREF tabBg = bSelected ? RGB(52, 52, 52) : RGB(32, 32, 32);
+		COLORREF tabBorder = bSelected ? RGB(75, 75, 75) : RGB(48, 48, 48);
+		dc.FillSolidRect(&rcItem, tabBg);
+		dc.Draw3dRect(&rcItem, tabBorder, tabBorder);
+		if (bSelected) {
+			CRect rcTop(rcItem.left, rcItem.top, rcItem.right, rcItem.top + 2);
+			dc.FillSolidRect(&rcTop, RGB(11, 91, 202));
+		}
+
+		TCHAR szText[256] = {0};
+		TCITEM tci = {0};
+		tci.mask = TCIF_TEXT;
+		tci.pszText = szText;
+		tci.cchTextMax = 256;
+		GetItem(i, &tci);
+
+		dc.SetTextColor(bSelected ? RGB(255, 255, 255) : RGB(175, 175, 175));
+		CRect rcText(rcItem);
+		if (m_bCloseable && m_ImgLstCloseButton.m_hImageList) {
+			CRect rcClose;
+			GetCloseButtonRect(i, rcItem, rcClose, bSelected, false);
+			m_ImgLstCloseButton.Draw(&dc, bSelected ? 0 : 1, rcClose.TopLeft(), ILD_TRANSPARENT);
+			rcText.right = rcClose.left - 2;
+		}
+		rcText.top += bSelected ? 3 : 2;
+		dc.DrawText(szText, &rcText, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+	}
+	if (pOldFont) dc.SelectObject(pOldFont);
 }

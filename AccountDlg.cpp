@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -78,19 +78,35 @@ BOOL AccountDlg::OnInitDialog()
 	CRect rcClient;
 	GetClientRect(rcClient);
 	m_szInitial = rcClient.Size();
-	m_nContentHeight = rcClient.Height();
 	m_nScrollPos = 0;
-	SCROLLINFO si;
-	si.cbSize = sizeof(si);
-	si.fMask = SIF_ALL;
-	si.nMin = 0;
-	si.nMax = m_nContentHeight;
-	si.nPage = (UINT)rcClient.Height();
-	si.nPos = 0;
-	si.nTrackPos = 0;
-	SetScrollInfo(SB_VERT, &si, TRUE);
+
+	m_btnSave.SubclassDlgItem(IDOK, this);
+	m_btnCancel.SubclassDlgItem(IDCANCEL, this);
+	m_btnRemove.SubclassDlgItem(IDC_ACCOUNT_REMOVE, this);
+	m_btnSave.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_btnSave.m_bTransparent = FALSE;
+	m_btnCancel.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_btnCancel.m_bTransparent = FALSE;
+	m_btnRemove.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_btnRemove.m_bTransparent = FALSE;
+	if (accountSettings.darkMode) {
+		m_btnSave.SetFaceColor(RGB(11, 91, 202));
+		m_btnSave.SetTextColor(RGB(255, 255, 255));
+		m_btnCancel.SetFaceColor(RGB(50, 50, 50));
+		m_btnCancel.SetTextColor(RGB(230, 230, 230));
+		m_btnRemove.SetFaceColor(RGB(180, 40, 40));
+		m_btnRemove.SetTextColor(RGB(255, 255, 255));
+	} else {
+		m_btnSave.SetFaceColor(RGB(235, 235, 235));
+		m_btnSave.SetTextColor(RGB(0, 0, 0));
+		m_btnCancel.SetFaceColor(RGB(235, 235, 235));
+		m_btnCancel.SetTextColor(RGB(0, 0, 0));
+		m_btnRemove.SetFaceColor(RGB(235, 235, 235));
+		m_btnRemove.SetTextColor(RGB(0, 0, 0));
+	}
 
 	m_ctrls.clear();
+	int maxBottom = rcClient.Height();
 	HWND hChild = ::GetWindow(m_hWnd, GW_CHILD);
 	while (hChild) {
 		int id = ::GetDlgCtrlID(hChild);
@@ -104,11 +120,12 @@ BOOL AccountDlg::OnInitDialog()
 		ci.moveY = false;
 		ci.sizeX = false;
 
+		if (rc.bottom > maxBottom) {
+			maxBottom = rc.bottom;
+		}
+
 		if (id == IDOK || id == IDCANCEL) {
-			ci.moveY = true;
 			ci.moveX = true;
-		} else if (id == IDC_ACCOUNT_REMOVE) {
-			ci.moveY = true;
 		} else if (id == IDC_SYSLINK_SIP_SERVER || id == IDC_SYSLINK_SIP_PROXY ||
 				   id == IDC_SYSLINK_USERNAME || id == IDC_SYSLINK_DOMAIN ||
 				   id == IDC_SYSLINK_AUTHID || id == IDC_SYSLINK_PASSWORD ||
@@ -130,6 +147,14 @@ BOOL AccountDlg::OnInitDialog()
 		m_ctrls.push_back(ci);
 		hChild = ::GetWindow(hChild, GW_HWNDNEXT);
 	}
+	m_nContentHeight = maxBottom + 20;
+
+	int screenH = GetSystemMetrics(SM_CYSCREEN);
+	if (rcWindow.Height() > (int)(screenH * 0.85)) {
+		int newH = (int)(screenH * 0.85);
+		SetWindowPos(NULL, 0, 0, rcWindow.Width(), newH, SWP_NOMOVE | SWP_NOZORDER);
+	}
+	UpdateControlPositions();
 
 	TranslateDialog(this->m_hWnd);
 
