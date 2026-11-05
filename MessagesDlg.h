@@ -121,7 +121,9 @@ public:
 	afx_msg void OnBnClickedActions(bool isConference = false);
 	afx_msg void OnBnClickedTransfer();
 	afx_msg void OnBnClickedConference();
+	afx_msg void OnBnClickedMuteInput();
 	afx_msg void OnBnClickedHold();
+	void UpdateMuteButton();
 	afx_msg void OnBnClickedEnd();
 	afx_msg void OnCloseAllTabs(); 
 	afx_msg void OnGoToLastTab();
