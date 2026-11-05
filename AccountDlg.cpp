@@ -721,35 +721,36 @@ void AccountDlg::OnChangePassword()
 
 
 
-void AccountDlg::OnSize(UINT nType, int cx, int cy)
+void AccountDlg::UpdateControlPositions()
 {
-	CDialog::OnSize(nType, cx, cy);
 	if (m_szInitial.cx <= 0 || m_szInitial.cy <= 0) return;
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	int cx = rcClient.Width();
+	int cy = rcClient.Height();
 
-	if (m_nScrollPos != 0) {
-		ScrollWindowEx(0, m_nScrollPos, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
-		m_nScrollPos = 0;
-	}
+	int maxScroll = max(0, m_nContentHeight - cy);
+	if (m_nScrollPos > maxScroll) m_nScrollPos = maxScroll;
+	if (m_nScrollPos < 0) m_nScrollPos = 0;
 
 	SCROLLINFO si;
 	si.cbSize = sizeof(si);
 	si.fMask = SIF_ALL;
 	si.nMin = 0;
-	si.nMax = m_nContentHeight > 0 ? m_nContentHeight : m_szInitial.cy;
+	si.nMax = m_nContentHeight;
 	si.nPage = (UINT)cy;
-	si.nPos = 0;
-	si.nTrackPos = 0;
+	si.nPos = m_nScrollPos;
+	si.nTrackPos = m_nScrollPos;
 	SetScrollInfo(SB_VERT, &si, TRUE);
 
 	int dx = cx - m_szInitial.cx;
-	int dy = cy - m_szInitial.cy;
 
 	HDWP hDwp = BeginDeferWindowPos((int)m_ctrls.size());
 	for (size_t i = 0; i < m_ctrls.size(); ++i) {
 		const CtrlInfo& ci = m_ctrls[i];
 		if (::IsWindow(ci.hWnd)) {
 			int newX = ci.rc.left + (ci.moveX ? dx : 0);
-			int newY = ci.rc.top + (ci.moveY ? dy : 0);
+			int newY = ci.rc.top - m_nScrollPos;
 			int newW = ci.rc.Width() + (ci.sizeX ? dx : 0);
 			int newH = ci.rc.Height();
 			hDwp = DeferWindowPos(hDwp, ci.hWnd, NULL, newX, newY, newW, newH, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -759,20 +760,24 @@ void AccountDlg::OnSize(UINT nType, int cx, int cy)
 	Invalidate();
 }
 
+void AccountDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+	UpdateControlPositions();
+}
+
 void AccountDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
 	CDialog::OnGetMinMaxInfo(lpMMI);
-	if (m_szMin.cx > 0) {
-		lpMMI->ptMinTrackSize.x = m_szMin.cx;
-		lpMMI->ptMinTrackSize.y = m_szMin.cy;
-	}
+	lpMMI->ptMinTrackSize.x = m_szMin.cx > 0 ? m_szMin.cx : 250;
+	lpMMI->ptMinTrackSize.y = 300;
 }
 
 HBRUSH AccountDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	if (accountSettings.darkMode) {
 		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
-			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetTextColor(RGB(220, 220, 220));
 			pDC->SetBkColor(RGB(32, 32, 32));
 			return (HBRUSH)m_brDarkBg.GetSafeHandle();
 		}
@@ -782,12 +787,13 @@ HBRUSH AccountDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
 		}
 		if (nCtlColor == CTLCOLOR_BTN) {
+			pDC->SetTextColor(RGB(220, 220, 220));
+			pDC->SetBkColor(RGB(32, 32, 32));
 			return (HBRUSH)m_brDarkBg.GetSafeHandle();
 		}
 	}
 	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }
-
 
 void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
@@ -796,7 +802,7 @@ void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	si.fMask = SIF_ALL;
 	GetScrollInfo(SB_VERT, &si);
 
-	int curPos = si.nPos;
+	int curPos = m_nScrollPos;
 	int newPos = curPos;
 
 	switch (nSBCode) {
@@ -807,16 +813,16 @@ void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		newPos = si.nMax;
 		break;
 	case SB_LINEUP:
-		newPos -= 20;
+		newPos -= 25;
 		break;
 	case SB_LINEDOWN:
-		newPos += 20;
+		newPos += 25;
 		break;
 	case SB_PAGEUP:
-		newPos -= si.nPage;
+		newPos -= (int)si.nPage;
 		break;
 	case SB_PAGEDOWN:
-		newPos += si.nPage;
+		newPos += (int)si.nPage;
 		break;
 	case SB_THUMBTRACK:
 	case SB_THUMBPOSITION:
@@ -824,16 +830,13 @@ void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		break;
 	}
 
-	int maxPos = max(0, (int)(si.nMax - (int)si.nPage));
+	int maxScroll = max(0, m_nContentHeight - (int)si.nPage);
 	if (newPos < 0) newPos = 0;
-	if (newPos > maxPos) newPos = maxPos;
+	if (newPos > maxScroll) newPos = maxScroll;
 
 	if (newPos != curPos) {
-		int deltaY = curPos - newPos;
 		m_nScrollPos = newPos;
-		ScrollWindowEx(0, deltaY, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
-		SetScrollPos(SB_VERT, m_nScrollPos, TRUE);
-		UpdateWindow();
+		UpdateControlPositions();
 	}
 
 	CDialog::OnVScroll(nSBCode, nPos, pScrollBar);
@@ -843,22 +846,16 @@ BOOL AccountDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	int lines = -zDelta / WHEEL_DELTA;
 	if (lines != 0) {
-		SCROLLINFO si;
-		si.cbSize = sizeof(si);
-		si.fMask = SIF_ALL;
-		GetScrollInfo(SB_VERT, &si);
-		int maxPos = max(0, (int)(si.nMax - (int)si.nPage));
-		if (maxPos > 0) {
-			int curPos = si.nPos;
-			int newPos = curPos + lines * 30;
+		CRect rcClient;
+		GetClientRect(&rcClient);
+		int maxScroll = max(0, m_nContentHeight - rcClient.Height());
+		if (maxScroll > 0) {
+			int newPos = m_nScrollPos + lines * 35;
 			if (newPos < 0) newPos = 0;
-			if (newPos > maxPos) newPos = maxPos;
-			if (newPos != curPos) {
-				int deltaY = curPos - newPos;
+			if (newPos > maxScroll) newPos = maxScroll;
+			if (newPos != m_nScrollPos) {
 				m_nScrollPos = newPos;
-				ScrollWindowEx(0, deltaY, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
-				SetScrollPos(SB_VERT, m_nScrollPos, TRUE);
-				UpdateWindow();
+				UpdateControlPositions();
 			}
 			return TRUE;
 		}
