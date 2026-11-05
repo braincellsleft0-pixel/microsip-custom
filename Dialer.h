@@ -62,18 +62,17 @@ class Dialer :
 	HICON m_hIconMutedOutput;
 	HICON m_hIconMuteInput;
 	HICON m_hIconMutedInput;
-	BOOL muteOutput;
-	BOOL muteInput;
 	CStatic m_ButtonMinusInput;
 	CStatic m_ButtonMinusOutput;
 	CStatic m_ButtonPlusInput;
 	CStatic m_ButtonPlusOutput;
-
 	CPoint windowSize;
 
 	BOOL delayedDTMF;
 
 public:
+	BOOL muteOutput;
+	BOOL muteInput;
 
 	CButtonBottom m_ButtonDND;
 	CButtonBottom m_ButtonFWD;
