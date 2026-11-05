@@ -379,12 +379,10 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	COLORREF crOldColor = CLR_NONE;
 	if (tci.dwState & TCIS_HIGHLIGHTED)
 		crOldColor = pDC->SetTextColor(RGB(192, 0, 0));
+	else if (accountSettings.darkMode)
+		crOldColor = pDC->SetTextColor(bSelected ? RGB(255, 255, 255) : (bVistaHotTracked ? RGB(220, 220, 220) : RGB(175, 175, 175)));
 	else if (bVistaHotTracked)
-		if (accountSettings.darkMode) {
-			crOldColor = pDC->SetTextColor(bSelected ? RGB(255, 255, 255) : RGB(190, 190, 190));
-		} else {
-			crOldColor = pDC->SetTextColor(GetSysColor(COLOR_BTNTEXT));
-		}
+		crOldColor = pDC->SetTextColor(GetSysColor(COLOR_BTNTEXT));
 
 	rect.top += bSelected ? 4 : 3;
 	pDC->DrawText(szLabel, rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
@@ -553,6 +551,12 @@ HBRUSH CClosableTabCtrl::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 // Vista: Can not be used to workaround the problems with owner drawn tab control
 BOOL CClosableTabCtrl::OnEraseBkgnd(CDC* pDC)
 {
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
 	return CTabCtrl::OnEraseBkgnd(pDC);
 }
 

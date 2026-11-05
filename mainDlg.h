@@ -71,6 +71,9 @@ public:
 
 	bool m_startMinimized;
 	CButton m_ButtonMenu;
+	CButton m_ButtonDarkMode;
+	afx_msg void OnBnClickedDarkMode();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	SettingsDlg* settingsDlg;
 	bool shortcutsEnabled;
 	bool shortcutsBottom;
@@ -247,10 +250,14 @@ public:
 	afx_msg void OnMenuCustomRange(UINT nID);
 	afx_msg void OnMenuSettings();
 	afx_msg void OnMenuShortcuts();
-	afx_msg void OnMenuAlwaysOnTop();
-	afx_msg void OnMenuDarkMode();
-	void ApplyDarkMode(bool enable);
-	CBrush m_brDarkBg;
+	afx_msg void OnMenuAlwaysOnTop();
+
+	afx_msg void OnMenuDarkMode();
+
+	void ApplyDarkMode(bool enable);
+
+	CBrush m_brDarkBg;
+
 	CBrush m_brDarkEdit;
 	afx_msg void OnMenuLog();
 	afx_msg void OnMenuExit();

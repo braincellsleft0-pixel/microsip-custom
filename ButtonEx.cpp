@@ -1,3 +1,4 @@
+#include "settings.h"
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -43,9 +44,13 @@ BOOL CButtonEx::EnableWindow(BOOL bEnable)
 		SetFaceColor(m_FaceColor, true);
 	}
 	else {
-//		SetTextColor(RGB(123, 123, 123));
-		SetTextColor(RGB(0, 0, 0));
-		SetFaceColor(RGB(222, 222, 222), true);
+		if (accountSettings.darkMode) {
+			SetTextColor(RGB(140, 140, 140));
+			SetFaceColor(RGB(48, 48, 48), true);
+		} else {
+			SetTextColor(RGB(0, 0, 0));
+			SetFaceColor(RGB(222, 222, 222), true);
+		}
 	}
 	return CMFCButton::EnableWindow(bEnable);
 }

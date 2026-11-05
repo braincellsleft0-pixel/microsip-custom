@@ -1578,3 +1578,38 @@ void msip_set_window_dark_mode(HWND hWnd, BOOL dark)
 		::RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
 	}
 }
+
+
+void call_play_busy_tone()
+{
+	if (pjsua_var.state != PJSUA_STATE_RUNNING) {
+		MessageBeep(MB_ICONEXCLAMATION);
+		return;
+	}
+	struct call_tonegen_data *cd = tone_gen;
+	if (!cd) {
+		cd = call_init_tonegen(-1);
+	}
+	if (cd) {
+		tone_gen = cd;
+		pjsua_conf_adjust_rx_level(cd->toneslot, 0.5f);
+		pjsua_conf_connect(cd->toneslot, 0);
+
+		pjmedia_tone_desc tones[3];
+		pj_bzero(tones, sizeof(tones));
+		for (int i = 0; i < 3; ++i) {
+			tones[i].freq1 = 480;
+			tones[i].freq2 = 620;
+			tones[i].on_msec = 200;
+			tones[i].off_msec = 150;
+			tones[i].volume = 15000;
+		}
+		pjmedia_tonegen_play(cd->tonegen, 3, tones, 0);
+
+		if (destroyDTMFPlayerTimer) {
+			KillTimer(NULL, destroyDTMFPlayerTimer);
+		}
+		destroyDTMFPlayerTimer = SetTimer(NULL, NULL, 3000, (TIMERPROC)destroyDTMFPlayerTimerHandler);
+	}
+	MessageBeep(MB_ICONEXCLAMATION);
+}

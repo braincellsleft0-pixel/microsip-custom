@@ -78,6 +78,17 @@ BOOL AccountDlg::OnInitDialog()
 	CRect rcClient;
 	GetClientRect(rcClient);
 	m_szInitial = rcClient.Size();
+	m_nContentHeight = rcClient.Height();
+	m_nScrollPos = 0;
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	si.nMin = 0;
+	si.nMax = m_nContentHeight;
+	si.nPage = (UINT)rcClient.Height();
+	si.nPos = 0;
+	si.nTrackPos = 0;
+	SetScrollInfo(SB_VERT, &si, TRUE);
 
 	m_ctrls.clear();
 	HWND hChild = ::GetWindow(m_hWnd, GW_CHILD);
@@ -689,6 +700,22 @@ void AccountDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 	if (m_szInitial.cx <= 0 || m_szInitial.cy <= 0) return;
+
+	if (m_nScrollPos != 0) {
+		ScrollWindowEx(0, m_nScrollPos, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
+		m_nScrollPos = 0;
+	}
+
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	si.nMin = 0;
+	si.nMax = m_nContentHeight > 0 ? m_nContentHeight : m_szInitial.cy;
+	si.nPage = (UINT)cy;
+	si.nPos = 0;
+	si.nTrackPos = 0;
+	SetScrollInfo(SB_VERT, &si, TRUE);
+
 	int dx = cx - m_szInitial.cx;
 	int dy = cy - m_szInitial.cy;
 
@@ -734,4 +761,93 @@ HBRUSH AccountDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		}
 	}
 	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+
+void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	GetScrollInfo(SB_VERT, &si);
+
+	int curPos = si.nPos;
+	int newPos = curPos;
+
+	switch (nSBCode) {
+	case SB_TOP:
+		newPos = si.nMin;
+		break;
+	case SB_BOTTOM:
+		newPos = si.nMax;
+		break;
+	case SB_LINEUP:
+		newPos -= 20;
+		break;
+	case SB_LINEDOWN:
+		newPos += 20;
+		break;
+	case SB_PAGEUP:
+		newPos -= si.nPage;
+		break;
+	case SB_PAGEDOWN:
+		newPos += si.nPage;
+		break;
+	case SB_THUMBTRACK:
+	case SB_THUMBPOSITION:
+		newPos = si.nTrackPos;
+		break;
+	}
+
+	int maxPos = max(0, (int)(si.nMax - (int)si.nPage));
+	if (newPos < 0) newPos = 0;
+	if (newPos > maxPos) newPos = maxPos;
+
+	if (newPos != curPos) {
+		int deltaY = curPos - newPos;
+		m_nScrollPos = newPos;
+		ScrollWindowEx(0, deltaY, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
+		SetScrollPos(SB_VERT, m_nScrollPos, TRUE);
+		UpdateWindow();
+	}
+
+	CDialog::OnVScroll(nSBCode, nPos, pScrollBar);
+}
+
+BOOL AccountDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	int lines = -zDelta / WHEEL_DELTA;
+	if (lines != 0) {
+		SCROLLINFO si;
+		si.cbSize = sizeof(si);
+		si.fMask = SIF_ALL;
+		GetScrollInfo(SB_VERT, &si);
+		int maxPos = max(0, (int)(si.nMax - (int)si.nPage));
+		if (maxPos > 0) {
+			int curPos = si.nPos;
+			int newPos = curPos + lines * 30;
+			if (newPos < 0) newPos = 0;
+			if (newPos > maxPos) newPos = maxPos;
+			if (newPos != curPos) {
+				int deltaY = curPos - newPos;
+				m_nScrollPos = newPos;
+				ScrollWindowEx(0, deltaY, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
+				SetScrollPos(SB_VERT, m_nScrollPos, TRUE);
+				UpdateWindow();
+			}
+			return TRUE;
+		}
+	}
+	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+BOOL AccountDlg::OnEraseBkgnd(CDC* pDC)
+{
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
+	return CDialog::OnEraseBkgnd(pDC);
 }

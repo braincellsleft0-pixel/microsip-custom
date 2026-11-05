@@ -133,6 +133,9 @@ protected:
 
 public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd *pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	CBrush m_brDarkBg;
+	CBrush m_brDarkEdit;
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedDND(); 

@@ -302,6 +302,8 @@ void Dialer::OnTimerShortcutsBlink()
 BOOL Dialer::OnInitDialog()
 {
 	CBaseDialog::OnInitDialog();
+	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
+	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
 
 	if (langPack.rtl) {
 		m_SliderCtrlOutput.ModifyStyleEx(0, WS_EX_LAYOUTRTL);
@@ -498,6 +500,7 @@ BEGIN_MESSAGE_MAP(Dialer, CBaseDialog)
 	ON_BN_CLICKED(IDCANCEL, OnBnClickedCancel)
 	ON_WM_SETCURSOR()
 	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_DIALER_DND, &Dialer::OnBnClickedDND)
 	ON_BN_CLICKED(IDC_DIALER_FWD, &Dialer::OnBnClickedFWD)
 	ON_BN_CLICKED(IDC_DIALER_AA, &Dialer::OnBnClickedAA)
@@ -959,15 +962,43 @@ BOOL Dialer::PreTranslateMessage(MSG* pMsg)
 
 HBRUSH Dialer::OnCtlColor(CDC* pDC, CWnd *pWnd, UINT nCtlColor)
 {
+	if (accountSettings.darkMode) {
+		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
+			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetBkColor(RGB(32, 32, 32));
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
+			pDC->SetTextColor(RGB(245, 245, 245));
+			pDC->SetBkColor(RGB(45, 45, 45));
+			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_BTN) {
+			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetBkColor(RGB(32, 32, 32));
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+	}
 	HBRUSH br = CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 	if (pWnd == &m_ButtonMinusInput
 		|| pWnd == &m_ButtonMinusOutput
 		|| pWnd == &m_ButtonPlusInput
 		|| pWnd == &m_ButtonPlusOutput
 		) {
-		pDC->SetTextColor(RGB(127, 127, 127));
+		pDC->SetTextColor(accountSettings.darkMode ? RGB(200, 200, 200) : RGB(127, 127, 127));
 	}
 	return br;
+}
+
+BOOL Dialer::OnEraseBkgnd(CDC* pDC)
+{
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
+	return CBaseDialog::OnEraseBkgnd(pDC);
 }
 
 

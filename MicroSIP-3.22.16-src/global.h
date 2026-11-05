@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -393,6 +393,7 @@ CString get_public_addr(Account *account = NULL);
 struct call_tonegen_data *call_init_tonegen(pjsua_call_id call_id);
 BOOL call_play_digit(pjsua_call_id call_id, const char *digits, int duration = 160);
 void call_deinit_tonegen(pjsua_call_id call_id);
+void call_play_busy_tone();
 void destroyDTMFPlayerTimerHandler(
   HWND hwnd,
   UINT uMsg,
@@ -437,7 +438,8 @@ CStringA char2hex(char dec);
 CString URLMask(CString url, SIPURI* sipuri = NULL, pjsua_acc_id acc = -1, call_user_data *user_data = NULL, pjsua_call_info* call_info = NULL);
 HICON LoadImageIcon(int i);
 
-void msip_set_sound_device(int outDev, bool forse = 0);
+void msip_set_sound_device(int outDev, bool forse = 0);
+
 void msip_set_window_dark_mode(HWND hWnd, BOOL dark);
 bool msip_call_statistics(call_user_data *user_data, float *MOS);
 void msip_call_dial_dtmf(pjsua_call_id call_id, CString digits);

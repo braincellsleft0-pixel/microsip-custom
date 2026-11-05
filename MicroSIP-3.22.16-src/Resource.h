@@ -1,4 +1,4 @@
-﻿//{{NO_DEPENDENCIES}}
+//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by main.rc
 //
@@ -238,6 +238,7 @@
 
 #define IDC_MAIN_TAB	1000
 #define IDC_MAIN_MENU	1001
+#define IDC_DARK_MODE_BTN 1205
 #define IDC_MAIN_PHONE	1002
 #define IDC_MAIN_LOGS		1003
 #define IDC_MAIN_CONTACTS	1004
@@ -487,7 +488,8 @@
 #define ID_HIDE_CALLS	32812
 #define ID_UPDATES	32813
 #define ID_SMS 32814
-#define ID_CMD 32815
+#define ID_CMD 32815
+
 #define ID_DARK_MODE 32816
 #define ID_ACCOUNT_CHANGE_RANGE	40000
 #define ID_ACCOUNT_EDIT_RANGE	40100
@@ -503,7 +505,7 @@
 #define _APS_NEXT_RESOURCE_VALUE        238
 
 #define _APS_NEXT_COMMAND_VALUE         32817
-#define _APS_NEXT_CONTROL_VALUE         1205
+#define _APS_NEXT_CONTROL_VALUE         1206
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

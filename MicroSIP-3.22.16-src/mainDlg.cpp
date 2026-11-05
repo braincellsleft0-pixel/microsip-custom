@@ -1590,6 +1590,7 @@ void CmainDlg::DoDataExchange(CDataExchange* pDX)
 	CBaseDialog::DoDataExchange(pDX);
 	//	DDX_Control(pDX, IDD_MAIN, *mainDlg);
 	DDX_Control(pDX, IDC_MAIN_MENU, m_ButtonMenu);
+	DDX_Control(pDX, IDC_DARK_MODE_BTN, m_ButtonDarkMode);
 }
 
 BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
@@ -1607,6 +1608,8 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 	ON_BN_CLICKED(IDC_MAIN_MENU, OnBnClickedMenu)
+	ON_BN_CLICKED(IDC_DARK_MODE_BTN, OnBnClickedDarkMode)
+	ON_WM_ERASEBKGND()
 	ON_MESSAGE(UM_UPDATEWINDOWTEXT, OnUpdateWindowText)
 	ON_MESSAGE(UM_NOTIFYICON, onTrayNotify)
 	ON_MESSAGE(UM_CREATE_RINGING, onCreateRingingDlg)
@@ -1641,7 +1644,8 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
 	ON_MESSAGE(UM_UPDATE_CHECKER_LOADED, OnUpdateCheckerLoaded)
 	ON_COMMAND(ID_SETTINGS, OnMenuSettings)
 	ON_COMMAND(ID_SHORTCUTS, OnMenuShortcuts)
-	ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
+	ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
+
 	ON_COMMAND(ID_DARK_MODE, OnMenuDarkMode)
 	ON_COMMAND(ID_LOG, OnMenuLog)
 	ON_COMMAND(ID_EXIT, OnMenuExit)
@@ -2002,6 +2006,8 @@ BOOL CmainDlg::OnInitDialog()
 
 	AutoMove(tab->m_hWnd, 0, 0, 100, 0);
 	AutoMove(m_ButtonMenu.m_hWnd, 100, 0, 0, 0);
+	AutoMove(m_ButtonDarkMode.m_hWnd, 100, 0, 0, 0);
+	m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
 
 	BYTE offset = tabRect.bottom - 1;
 	CRect pageRect;
@@ -5479,23 +5485,61 @@ void CmainDlg::Unsubscribe()
 }
 
 
+void CmainDlg::OnBnClickedDarkMode()
+{
+	OnMenuDarkMode();
+	if (m_ButtonDarkMode.m_hWnd) {
+		m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
+	}
+}
+
 void CmainDlg::OnMenuDarkMode()
 {
 	accountSettings.darkMode = !accountSettings.darkMode;
 	AccountSettingsPendingSave();
 	ApplyDarkMode(accountSettings.darkMode);
+	if (m_ButtonDarkMode.m_hWnd) {
+		m_ButtonDarkMode.SetWindowText(accountSettings.darkMode ? _T("☀") : _T("🌙"));
+	}
 }
 
 void CmainDlg::ApplyDarkMode(bool enable)
 {
 	msip_set_window_dark_mode(m_hWnd, enable);
+	if (m_bar.m_hWnd) {
+		m_bar.GetStatusBarCtrl().SetBkColor(enable ? RGB(32, 32, 32) : CLR_DEFAULT);
+		m_bar.Invalidate();
+	}
+	if (pageDialer && pageDialer->m_hWnd) {
+		msip_set_window_dark_mode(pageDialer->m_hWnd, enable);
+		pageDialer->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+	}
+	if (pageCalls && pageCalls->m_hWnd) {
+		msip_set_window_dark_mode(pageCalls->m_hWnd, enable);
+		pageCalls->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+	}
+	if (pageContacts && pageContacts->m_hWnd) {
+		msip_set_window_dark_mode(pageContacts->m_hWnd, enable);
+		pageContacts->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+	}
 	if (messagesDlg && messagesDlg->m_hWnd) {
 		msip_set_window_dark_mode(messagesDlg->m_hWnd, enable);
-		messagesDlg->Invalidate();
+		messagesDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
 	if (accountDlg && accountDlg->m_hWnd) {
 		msip_set_window_dark_mode(accountDlg->m_hWnd, enable);
-		accountDlg->Invalidate();
+		accountDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	}
-	Invalidate();
+	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+}
+
+BOOL CmainDlg::OnEraseBkgnd(CDC* pDC)
+{
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
+	return CBaseDialog::OnEraseBkgnd(pDC);
 }

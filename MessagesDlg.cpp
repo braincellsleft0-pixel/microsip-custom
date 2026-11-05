@@ -1108,9 +1108,16 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 	}
 	call_deinit_tonegen(call_info->id);
 
-	if (accountSettings.localDTMF) {
-		if (call_info->state != PJSIP_INV_STATE_DISCONNECTED || call_info->last_status == 200) {
+	if (call_info->state == PJSIP_INV_STATE_DISCONNECTED) {
+		if (call_info->last_status == 486 || 
+		    call_info->last_status == 480 || 
+		    call_info->last_status == 600 || 
+		    call_info->last_status == 603 ||
+		    (call_info->last_status_text.slen > 0 && MSIP::PjToStr(&call_info->last_status_text).Find(_T("Busy")) != -1)) {
+			call_play_busy_tone();
+		} else {
 			mainDlg->onPlayerPlay(MSIP_SOUND_HANGUP, 0);
+			MessageBeep(MB_OK);
 		}
 	}
 
@@ -2232,4 +2239,15 @@ HBRUSH MessagesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		}
 	}
 	return CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+BOOL MessagesDlg::OnEraseBkgnd(CDC* pDC)
+{
+	if (accountSettings.darkMode) {
+		CRect rc;
+		GetClientRect(&rc);
+		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
+		return TRUE;
+	}
+	return CBaseDialog::OnEraseBkgnd(pDC);
 }
