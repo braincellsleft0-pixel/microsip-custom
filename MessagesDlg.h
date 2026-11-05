@@ -59,6 +59,7 @@ public:
 
 	MessagesContact* AddTab(CString number, BOOL activate = FALSE, pjsua_call_info *call_info = NULL, call_user_data *user_data = NULL, BOOL notShowWindow = FALSE, BOOL ifExists = FALSE, CString numberOriginal = _T(""));
 	void OnChangeTab(pjsua_call_info *p_call_info = NULL, call_user_data *user_data = NULL);
+	CString FormatCallTitle(int curLine, MessagesContact* mc, pjsua_call_info* p_call_info = NULL);
 	void OnEndCall(pjsua_call_info *call_info, call_user_data *user_data);
 	bool CallCheck();
 	pjsua_call_id CurrentCallId();

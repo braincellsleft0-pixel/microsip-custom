@@ -518,6 +518,70 @@ MessagesContact* MessagesDlg::AddTab(CString number, BOOL activate, pjsua_call_i
 	return messagesContact;
 }
 
+CString MessagesDlg::FormatCallTitle(int curLine, MessagesContact* mc, pjsua_call_info* p_call_info)
+{
+	if (curLine <= 0) return _T("MicroSIP");
+	CString numStr;
+	if (mc) {
+		if (!mc->numberOriginal.IsEmpty()) {
+			numStr = mc->numberOriginal;
+		} else if (!mc->name.IsEmpty()) {
+			numStr = mc->name;
+		} else if (!mc->number.IsEmpty()) {
+			SIPURI sipuri;
+			MSIP::ParseSIPURI(mc->number, &sipuri);
+			numStr = !sipuri.user.IsEmpty() ? sipuri.user : mc->number;
+		}
+		int atPos = numStr.Find(_T('@'));
+		if (atPos != -1) {
+			numStr = numStr.Left(atPos);
+		}
+	}
+
+	pjsua_call_info local_info;
+	if (mc && mc->callId != -1 && pjsua_var.state == PJSUA_STATE_RUNNING) {
+		if (!p_call_info) {
+			if (pjsua_call_get_info(mc->callId, &local_info) == PJ_SUCCESS) {
+				p_call_info = &local_info;
+			}
+		}
+	}
+
+	CString title;
+	if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CONFIRMED) {
+		if (mc) mc->callStatus = _T("");
+		int sec = msip_get_duration(&p_call_info->connect_duration);
+		bool onHold = (p_call_info->media_status == PJSUA_CALL_MEDIA_LOCAL_HOLD || p_call_info->media_status == PJSUA_CALL_MEDIA_NONE);
+		if (onHold) {
+			if (!numStr.IsEmpty()) title.Format(_T("Call %d [Hold] (%02d:%02d) - %s"), curLine, sec / 60, sec % 60, numStr);
+			else title.Format(_T("Call %d [Hold] (%02d:%02d)"), curLine, sec / 60, sec % 60);
+		} else {
+			if (!numStr.IsEmpty()) title.Format(_T("Call %d (%02d:%02d) - %s"), curLine, sec / 60, sec % 60, numStr);
+			else title.Format(_T("Call %d (%02d:%02d)"), curLine, sec / 60, sec % 60);
+		}
+	} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_EARLY) {
+		CString status = (p_call_info->last_status == 180) ? _T("Ringing...") : _T("Calling...");
+		if (mc) mc->callStatus = status;
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d (%s) - %s"), curLine, status, numStr);
+		else title.Format(_T("Call %d (%s)"), curLine, status);
+	} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CALLING) {
+		if (mc) mc->callStatus = _T("Calling...");
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d (Calling...) - %s"), curLine, numStr);
+		else title.Format(_T("Call %d (Calling...)"), curLine);
+	} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CONNECTING) {
+		if (mc) mc->callStatus = _T("Connecting...");
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d (Connecting...) - %s"), curLine, numStr);
+		else title.Format(_T("Call %d (Connecting...)"), curLine);
+	} else if (mc && !mc->callStatus.IsEmpty()) {
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d (%s) - %s"), curLine, mc->callStatus, numStr);
+		else title.Format(_T("Call %d (%s)"), curLine, mc->callStatus);
+	} else {
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d - %s"), curLine, numStr);
+		else title.Format(_T("Call %d"), curLine);
+	}
+	return title;
+}
+
 void MessagesDlg::OnChangeTab(pjsua_call_info *p_call_info, call_user_data *user_data)
 {
 	//tab->HighlightItem(tab->GetCurSel(),FALSE);
@@ -539,54 +603,7 @@ void MessagesDlg::OnChangeTab(pjsua_call_info *p_call_info, call_user_data *user
 	}
 	int curSel = tab ? tab->GetCurSel() : -1;
 	int curLine = curSel + 1;
-	CString lineTitle;
-	if (messagesContact && messagesContact->callId != -1 && pjsua_var.state == PJSUA_STATE_RUNNING) {
-		if (!p_call_info) {
-			if (pjsua_call_get_info(messagesContact->callId, &call_info) == PJ_SUCCESS) {
-				p_call_info = &call_info;
-			}
-		}
-		if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CONFIRMED) {
-			messagesContact->callStatus = _T("");
-			int sec = msip_get_duration(&p_call_info->connect_duration);
-			if (p_call_info->media_status == PJSUA_CALL_MEDIA_LOCAL_HOLD || p_call_info->media_status == PJSUA_CALL_MEDIA_NONE) {
-				lineTitle.Format(_T("Call %d [Hold] (%02d:%02d)"), curLine, sec / 60, sec % 60);
-			} else {
-				lineTitle.Format(_T("Call %d (%02d:%02d)"), curLine, sec / 60, sec % 60);
-			}
-		} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_EARLY) {
-			if (p_call_info->last_status == 180) {
-				messagesContact->callStatus = _T("Ringing...");
-				lineTitle.Format(_T("Call %d (Ringing...)"), curLine);
-			} else {
-				messagesContact->callStatus = _T("Calling...");
-				lineTitle.Format(_T("Call %d (Calling...)"), curLine);
-			}
-		} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CALLING) {
-			messagesContact->callStatus = _T("Calling...");
-			lineTitle.Format(_T("Call %d (Calling...)"), curLine);
-		} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_CONNECTING) {
-			messagesContact->callStatus = _T("Connecting...");
-			lineTitle.Format(_T("Call %d (Connecting...)"), curLine);
-		} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_DISCONNECTED) {
-			if (!messagesContact->callStatus.IsEmpty()) {
-				lineTitle.Format(_T("Call %d (%s)"), curLine, messagesContact->callStatus);
-			} else {
-				lineTitle.Format(_T("Call %d (Ended)"), curLine);
-			}
-		} else {
-			if (!messagesContact->callStatus.IsEmpty()) {
-				lineTitle.Format(_T("Call %d (%s)"), curLine, messagesContact->callStatus);
-			} else {
-				lineTitle.Format(_T("Call %d"), curLine);
-			}
-		}
-	} else if (messagesContact && !messagesContact->callStatus.IsEmpty()) {
-		lineTitle.Format(_T("Call %d (%s)"), curLine, messagesContact->callStatus);
-	} else {
-		lineTitle.Format(_T("Call %d"), curLine);
-	}
-	SetWindowText(lineTitle);
+	SetWindowText(FormatCallTitle(curLine, messagesContact, p_call_info));
 
 	if (messagesContact->callId != -1) {
 		UpdateCallButton(TRUE, p_call_info, user_data);
@@ -998,9 +1015,7 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 			UpdateTabIcon(messagesContact);
 			if (tab->GetCurSel() == i) {
 				UpdateCallButton(FALSE, call_info, user_data);
-				CString title;
-				title.Format(_T("Call %d (%s)"), i + 1, messagesContact->callStatus);
-				SetWindowText(title);
+				SetWindowText(FormatCallTitle(i + 1, messagesContact));
 			}
 			break;
 		}
@@ -2174,70 +2189,7 @@ void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
 		int curSel = tab ? tab->GetCurSel() : -1;
 		int curLine = curSel + 1;
 		MessagesContact* mc = GetMessageContact(curSel);
-		if (mc && mc->callId != -1 && pjsua_var.state == PJSUA_STATE_RUNNING) {
-			pjsua_call_info call_info;
-			if (pjsua_call_get_info(mc->callId, &call_info) == PJ_SUCCESS) {
-				if (call_info.state == PJSIP_INV_STATE_CONFIRMED) {
-					mc->callStatus = _T("");
-					int sec = msip_get_duration(&call_info.connect_duration);
-					CString title;
-					if (call_info.media_status == PJSUA_CALL_MEDIA_LOCAL_HOLD || call_info.media_status == PJSUA_CALL_MEDIA_NONE) {
-						title.Format(_T("Call %d [Hold] (%02d:%02d)"), curLine, sec / 60, sec % 60);
-					} else {
-						title.Format(_T("Call %d (%02d:%02d)"), curLine, sec / 60, sec % 60);
-					}
-					SetWindowText(title);
-				} else if (call_info.state == PJSIP_INV_STATE_EARLY) {
-					CString title;
-					if (call_info.last_status == 180) {
-						mc->callStatus = _T("Ringing...");
-						title.Format(_T("Call %d (Ringing...)"), curLine);
-					} else {
-						mc->callStatus = _T("Calling...");
-						title.Format(_T("Call %d (Calling...)"), curLine);
-					}
-					SetWindowText(title);
-				} else if (call_info.state == PJSIP_INV_STATE_CALLING) {
-					mc->callStatus = _T("Calling...");
-					CString title;
-					title.Format(_T("Call %d (Calling...)"), curLine);
-					SetWindowText(title);
-				} else if (call_info.state == PJSIP_INV_STATE_CONNECTING) {
-					mc->callStatus = _T("Connecting...");
-					CString title;
-					title.Format(_T("Call %d (Connecting...)"), curLine);
-					SetWindowText(title);
-				} else if (call_info.state == PJSIP_INV_STATE_DISCONNECTED) {
-					CString title;
-					if (!mc->callStatus.IsEmpty()) {
-						title.Format(_T("Call %d (%s)"), curLine, mc->callStatus);
-					} else {
-						title.Format(_T("Call %d (Ended)"), curLine);
-					}
-					SetWindowText(title);
-				}
-			} else {
-				CString title;
-				if (!mc->callStatus.IsEmpty()) {
-					title.Format(_T("Call %d (%s)"), curLine, mc->callStatus);
-				} else {
-					title.Format(_T("Call %d"), curLine);
-				}
-				SetWindowText(title);
-			}
-		} else {
-			CString title;
-			if (curLine > 0) {
-				if (mc && !mc->callStatus.IsEmpty()) {
-					title.Format(_T("Call %d (%s)"), curLine, mc->callStatus);
-				} else {
-					title.Format(_T("Call %d"), curLine);
-				}
-			} else {
-				title = _T("MicroSIP");
-			}
-			SetWindowText(title);
-		}
+		SetWindowText(FormatCallTitle(curLine, mc));
 		UpdateMuteButton();
 	}
 	CBaseDialog::OnTimer(nIDEvent);
