@@ -1,4 +1,4 @@
-//{{NO_DEPENDENCIES}}
+﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by main.rc
 //
@@ -124,6 +124,7 @@
 #define IDC_BUTTON_MUTE	1017
 #define IDC_BUTTON_MUTE_INPUT	1018
 #define IDC_BUTTON_MUTE_OUTPUT	1019
+#define IDC_CALL_MUTE	1208
 #define IDC_BUTTON_RU	1020
 #define IDC_BUTTON_SP	1021
 #define IDC_CALL	1022

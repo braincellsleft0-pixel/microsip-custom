@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ BOOL MessagesDlg::OnInitDialog()
 	CBaseDialog::OnInitDialog();
 
 	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
-	AutoMove(IDC_BUTTON_MUTE_INPUT, 100, 0, 0, 0);
+	AutoMove(IDC_CALL_MUTE, 100, 0, 0, 0);
 	AutoMove(IDC_HOLD, 100, 0, 0, 0);
 	AutoMove(IDC_END, 100, 0, 0, 0);
 	SetTimer(101, 1000, NULL);
@@ -238,7 +238,7 @@ BEGIN_MESSAGE_MAP(MessagesDlg, CBaseDialog)
 	ON_COMMAND(ID_SEPARATE, OnSeparate)
 	ON_COMMAND(ID_SEPARATE_ALL, OnSeparateAll)
 	ON_COMMAND(ID_DISCONNECT, OnDisconnect)
-	ON_BN_CLICKED(IDC_BUTTON_MUTE_INPUT, &MessagesDlg::OnBnClickedMuteInput)
+	ON_BN_CLICKED(IDC_CALL_MUTE, &MessagesDlg::OnBnClickedMuteInput)
 	ON_BN_CLICKED(IDC_HOLD, &MessagesDlg::OnBnClickedHold)
 	ON_BN_CLICKED(IDC_END, &MessagesDlg::OnBnClickedEnd)
 	ON_BN_CLICKED(IDC_CLOSE_ALL, &MessagesDlg::OnBnClickedCloseAll)
@@ -605,7 +605,6 @@ void MessagesDlg::OnChangeTab(pjsua_call_info *p_call_info, call_user_data *user
 	int curSel = tab ? tab->GetCurSel() : -1;
 	int curLine = curSel + 1;
 	SetWindowText(FormatCallTitle(curLine, messagesContact, p_call_info));
-	UpdateMuteButton();
 
 	if (messagesContact->callId != -1) {
 		UpdateCallButton(TRUE, p_call_info, user_data);
@@ -1739,7 +1738,7 @@ void MessagesDlg::OnBnClickedMuteInput()
 
 void MessagesDlg::UpdateMuteButton()
 {
-	CButton* btn = (CButton*)GetDlgItem(IDC_BUTTON_MUTE_INPUT);
+	CButton* btn = (CButton*)GetDlgItem(IDC_CALL_MUTE);
 	if (btn && btn->GetSafeHwnd()) {
 		MessagesContact* mc = GetMessageContact();
 		bool hasCall = (mc && mc->callId != -1);

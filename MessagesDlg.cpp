@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ BOOL MessagesDlg::OnInitDialog()
 	CBaseDialog::OnInitDialog();
 
 	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
-	AutoMove(IDC_BUTTON_MUTE_INPUT, 100, 0, 0, 0);
+	AutoMove(IDC_CALL_MUTE, 100, 0, 0, 0);
 	AutoMove(IDC_HOLD, 100, 0, 0, 0);
 	AutoMove(IDC_END, 100, 0, 0, 0);
 	SetTimer(101, 1000, NULL);
@@ -238,7 +238,7 @@ BEGIN_MESSAGE_MAP(MessagesDlg, CBaseDialog)
 	ON_COMMAND(ID_SEPARATE, OnSeparate)
 	ON_COMMAND(ID_SEPARATE_ALL, OnSeparateAll)
 	ON_COMMAND(ID_DISCONNECT, OnDisconnect)
-	ON_BN_CLICKED(IDC_BUTTON_MUTE_INPUT, &MessagesDlg::OnBnClickedMuteInput)
+	ON_BN_CLICKED(IDC_CALL_MUTE, &MessagesDlg::OnBnClickedMuteInput)
 	ON_BN_CLICKED(IDC_HOLD, &MessagesDlg::OnBnClickedHold)
 	ON_BN_CLICKED(IDC_END, &MessagesDlg::OnBnClickedEnd)
 	ON_BN_CLICKED(IDC_CLOSE_ALL, &MessagesDlg::OnBnClickedCloseAll)
@@ -552,13 +552,14 @@ CString MessagesDlg::FormatCallTitle(int curLine, MessagesContact* mc, pjsua_cal
 		if (mc) mc->callStatus = _T("");
 		int sec = msip_get_duration(&p_call_info->connect_duration);
 		bool onHold = (p_call_info->media_status == PJSUA_CALL_MEDIA_LOCAL_HOLD || p_call_info->media_status == PJSUA_CALL_MEDIA_NONE);
-		if (onHold) {
-			if (!numStr.IsEmpty()) title.Format(_T("Call %d [Hold] (%02d:%02d) - %s"), curLine, sec / 60, sec % 60, numStr);
-			else title.Format(_T("Call %d [Hold] (%02d:%02d)"), curLine, sec / 60, sec % 60);
-		} else {
-			if (!numStr.IsEmpty()) title.Format(_T("Call %d (%02d:%02d) - %s"), curLine, sec / 60, sec % 60, numStr);
-			else title.Format(_T("Call %d (%02d:%02d)"), curLine, sec / 60, sec % 60);
-		}
+		bool isMuted = (mc && mc->isMuted);
+		CString tag;
+		if (onHold && isMuted) tag = _T(" [Hold][Mute]");
+		else if (onHold) tag = _T(" [Hold]");
+		else if (isMuted) tag = _T(" [Mute]");
+
+		if (!numStr.IsEmpty()) title.Format(_T("Call %d%s (%02d:%02d) - %s"), curLine, tag, sec / 60, sec % 60, numStr);
+		else title.Format(_T("Call %d%s (%02d:%02d)"), curLine, tag, sec / 60, sec % 60);
 	} else if (p_call_info && p_call_info->state == PJSIP_INV_STATE_EARLY) {
 		CString status = (p_call_info->last_status == 180) ? _T("Ringing...") : _T("Calling...");
 		if (mc) mc->callStatus = status;
@@ -988,6 +989,7 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 		{
 			lastCall = messagesContact;
 			messagesContact->callId = -1;
+			messagesContact->isMuted = false;
 
 			CString statusStr = _T("Ended");
 			if (call_info->last_status == 486) {
@@ -1016,6 +1018,7 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 			if (tab->GetCurSel() == i) {
 				UpdateCallButton(FALSE, call_info, user_data);
 				SetWindowText(FormatCallTitle(i + 1, messagesContact));
+				UpdateMuteButton();
 			}
 			break;
 		}
@@ -1713,20 +1716,34 @@ void MessagesDlg::OnBnClickedHold()
 
 void MessagesDlg::OnBnClickedMuteInput()
 {
-	if (mainDlg && mainDlg->pageDialer) {
-		mainDlg->pageDialer->OnBnClickedMuteInput();
+	MessagesContact* mc = GetMessageContact();
+	if (!mc || mc->callId == -1) {
+		return;
+	}
+	mc->isMuted = !mc->isMuted;
+	if (pjsua_var.state == PJSUA_STATE_RUNNING) {
+		pjsua_call_info call_info;
+		if (pjsua_call_get_info(mc->callId, &call_info) == PJ_SUCCESS && call_info.conf_slot != PJSUA_INVALID_ID) {
+			if (mc->isMuted) {
+				pjsua_conf_disconnect(0, call_info.conf_slot);
+			} else {
+				pjsua_conf_connect(0, call_info.conf_slot);
+			}
+		}
 	}
 	UpdateMuteButton();
+	int curSel = tab ? tab->GetCurSel() : -1;
+	SetWindowText(FormatCallTitle(curSel + 1, mc));
 }
 
 void MessagesDlg::UpdateMuteButton()
 {
-	CButton* btn = (CButton*)GetDlgItem(IDC_BUTTON_MUTE_INPUT);
+	CButton* btn = (CButton*)GetDlgItem(IDC_CALL_MUTE);
 	if (btn && btn->GetSafeHwnd()) {
 		MessagesContact* mc = GetMessageContact();
 		bool hasCall = (mc && mc->callId != -1);
 		btn->EnableWindow(hasCall ? TRUE : FALSE);
-		bool isMuted = (mainDlg && mainDlg->pageDialer) ? mainDlg->pageDialer->muteInput : false;
+		bool isMuted = (mc && mc->isMuted);
 		btn->SetCheck(isMuted ? BST_CHECKED : BST_UNCHECKED);
 		btn->SetWindowText(isMuted ? _T("Unmute") : _T("Mute"));
 	}

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -291,11 +291,13 @@ struct MessagesContact {
 	pjsua_call_id callId;
 	CString callIdStr;
 	CString callStatus;
+	bool isMuted;
 	int mediaStatus;
 	MessagesContact():mediaStatus(PJSUA_CALL_MEDIA_ERROR)
 		,callId(-1)
 		,hasNewMessages(false)
 		,fromCommandLine(false)
+		,isMuted(false)
 	{}
 };
 

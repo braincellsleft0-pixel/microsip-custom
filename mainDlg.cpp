@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -643,6 +643,9 @@ LRESULT CmainDlg::onCallMediaState(WPARAM wParam, LPARAM lParam)
 	CString number = MSIP::PjToStr(&call_info->remote_info, TRUE);
 
 	MessagesContact* messagesContact = messagesDlg->AddTab(number, FALSE, call_info, user_data, TRUE, TRUE);
+	if (messagesContact && messagesContact->isMuted && call_info->conf_slot != PJSUA_INVALID_ID) {
+		pjsua_conf_disconnect(0, call_info->conf_slot);
+	}
 
 	if (messagesContact) {
 		if (call_info->media_status == PJSUA_CALL_MEDIA_REMOTE_HOLD) {
