@@ -1,0 +1,93 @@
+name: Build MicroSIP Windows
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout MicroSIP
+        uses: actions/checkout@v4
+        with:
+          path: microsip
+
+      - name: Clone PJSIP (pjproject)
+        run: |
+          git clone --depth 1 -b jfc-rustone-2.17 https://github.com/JFC-Group/JFC-pjproject.git pjproject
+        shell: powershell
+
+      - name: Configure PJSIP config_site.h
+        run: |
+          echo #define PJ_TODO(x) > pjproject\pjlib\include\pj\config_site.h
+        shell: cmd
+
+      - name: Download OpenSSL prebuilts
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/pjsip/third_party_libs/raw/main/openssl-1.1.1s-win.zip" -OutFile "openssl.zip"
+          Expand-Archive -LiteralPath openssl.zip -DestinationPath .
+          New-Item -ItemType Directory -Force -Path "pjproject\third_party\openssl\Win32"
+          Copy-Item -Path "openssl_build\*" -Destination "pjproject\third_party\openssl\Win32\" -Recurse -Force
+        shell: powershell
+
+      - name: Install and stage Opus
+        run: |
+          vcpkg install opus:x86-windows-static
+          New-Item -ItemType Directory -Force -Path "pjproject\third_party\opus\Win32"
+          New-Item -ItemType Directory -Force -Path "pjproject\third_party\lib"
+          New-Item -ItemType Directory -Force -Path "pjproject\lib"
+          Copy-Item "C:\vcpkg\installed\x86-windows-static\lib\opus.lib" "pjproject\third_party\opus\Win32\opus.lib" -Force
+          Copy-Item "C:\vcpkg\installed\x86-windows-static\lib\opus.lib" "pjproject\third_party\lib\opus.lib" -Force
+          Copy-Item "C:\vcpkg\installed\x86-windows-static\lib\opus.lib" "pjproject\lib\opus.lib" -Force
+        shell: powershell
+
+      - name: Relocate microsip inside pjproject tree
+        run: |
+          Move-Item -Path "microsip" -Destination "pjproject\microsip"
+        shell: powershell
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build PJSIP libraries (libpjproject)
+        working-directory: pjproject
+        run: |
+          call "%PROGRAMFILES%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+          set OPENSSL_DIR=%GITHUB_WORKSPACE%\openssl_build
+          set INCLUDE=%INCLUDE%;%OPENSSL_DIR%\include;C:\vcpkg\installed\x86-windows-static\include
+          set LIB=%LIB%;%OPENSSL_DIR%\lib;C:\vcpkg\installed\x86-windows-static\lib
+          msbuild pjsip-apps\build\libpjproject.vcxproj /p:PlatformToolset=v143 /p:Configuration=Release-Static /p:Platform=Win32 /m
+        shell: cmd
+
+      - name: Build MicroSIP executable
+        working-directory: pjproject\microsip
+        run: |
+          call "%PROGRAMFILES%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+          set OPENSSL_DIR=%GITHUB_WORKSPACE%\openssl_build
+          set INCLUDE=%INCLUDE%;%OPENSSL_DIR%\include;C:\vcpkg\installed\x86-windows-static\include
+          set LIB=%LIB%;%OPENSSL_DIR%\lib;C:\vcpkg\installed\x86-windows-static\lib
+          msbuild microsip.vcxproj /p:PlatformToolset=v143 /p:Configuration=Release /p:Platform=Win32 /m
+        shell: cmd
+
+      - name: Upload MicroSIP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MicroSIP-custom
+          path: |
+            pjproject/microsip/Release/microsip.exe
+            pjproject/microsip/Release/*.exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: v1.0.0-custom
+          name: "MicroSIP Custom Minimalist Edition"
+          body: "Custom MicroSIP with ultra-compact 2-row multi-line call dialog and active header timer."
+          files: |
+            pjproject/microsip/Release/microsip.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
