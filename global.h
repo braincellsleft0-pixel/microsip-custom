@@ -290,6 +290,7 @@ struct MessagesContact {
 	CTime lastSystemMessageTime;
 	pjsua_call_id callId;
 	CString callIdStr;
+	CString callStatus;
 	int mediaStatus;
 	MessagesContact():mediaStatus(PJSUA_CALL_MEDIA_ERROR)
 		,callId(-1)

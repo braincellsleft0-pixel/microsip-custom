@@ -344,11 +344,12 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	{
 		IMAGEINFO ii;
 		piml->GetImageInfo(0, &ii);
-		rect.left += bSelected ? 8 : 4;
+		rect.left += bSelected ? 6 : 4;
 		piml->Draw(pDC, tci.iImage, CPoint(rect.left, rect.top + (bSelected?2:1)), ILD_TRANSPARENT);
-		rect.left += (ii.rcImage.right - ii.rcImage.left);
-		if (!bSelected)
-			rect.left += 4;
+		rect.left += (ii.rcImage.right - ii.rcImage.left) + 2;
+	}
+	else {
+		rect.left += 4;
 	}
 
 	bool bCloseable = m_bCloseable;
@@ -376,8 +377,6 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 		}
 
 		rect.right = rcCloseButton.left - 2;
-		if (bSelected)
-			rect.left += hTheme ? 4 : 2;
 	}
 
 	COLORREF crOldColor = CLR_NONE;
@@ -387,14 +386,7 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 		crOldColor = pDC->SetTextColor(GetSysColor(COLOR_BTNTEXT));
 
 	rect.top += bSelected ? 4 : 3;
-	// Vista: Tab control has troubles with determining the width of a tab if the
-	// label contains one '&' character. To get around this, we use the old code which
-	// replaces one '&' character with two '&' characters and we do not specify DT_NOPREFIX
-	// here when drawing the text.
-	//
-	// Vista: "DrawThemeText" can not be used in case we need a certain foreground color. Thus we always us
-	// "DrawText" to always get the same font and metrics (just for safety).
-	pDC->DrawText(szLabel, rect, DT_SINGLELINE | DT_TOP | DT_CENTER /*| DT_NOPREFIX*/);
+	pDC->DrawText(szLabel, rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
 	if (crOldColor != CLR_NONE)
 		pDC->SetTextColor(crOldColor);
@@ -432,6 +424,8 @@ int CClosableTabCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CClosableTabCtrl::InternalInit()
 {
 	ModifyStyle(0, TCS_OWNERDRAWFIXED);
+	SetMinTabWidth(82);
+	SetPadding(CSize(12, 3));
 
 #if 1
 	// Under Vista Aero, all tab controls get by default the TCS_HOTTRACK
