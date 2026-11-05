@@ -103,6 +103,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnClose();
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnSize(UINT type, int w, int h);
