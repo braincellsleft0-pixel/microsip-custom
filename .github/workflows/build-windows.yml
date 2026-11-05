@@ -23,6 +23,9 @@ jobs:
       - name: Configure PJSIP config_site.h
         run: |
           echo #define PJ_TODO(x) > pjproject\pjlib\include\pj\config_site.h
+          echo #define PJMEDIA_HAS_VIDEO 1 >> pjproject\pjlib\include\pj\config_site.h
+          echo #define PJMEDIA_VIDEO_DEV_HAS_DSHOW 1 >> pjproject\pjlib\include\pj\config_site.h
+          echo #define PJMEDIA_VIDEO_DEV_HAS_SDL 0 >> pjproject\pjlib\include\pj\config_site.h
         shell: cmd
 
       - name: Download OpenSSL prebuilts
