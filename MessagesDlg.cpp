@@ -93,6 +93,8 @@ BOOL MessagesDlg::OnInitDialog()
 	CBaseDialog::OnInitDialog();
 
 	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
+	AutoMove(IDC_BUTTON_MUTE_INPUT, 100, 0, 0, 0);
+	AutoMove(IDC_HOLD, 100, 0, 0, 0);
 	AutoMove(IDC_END, 100, 0, 0, 0);
 	SetTimer(101, 1000, NULL);
 	lastCall = NULL;
@@ -236,6 +238,7 @@ BEGIN_MESSAGE_MAP(MessagesDlg, CBaseDialog)
 	ON_COMMAND(ID_SEPARATE, OnSeparate)
 	ON_COMMAND(ID_SEPARATE_ALL, OnSeparateAll)
 	ON_COMMAND(ID_DISCONNECT, OnDisconnect)
+	ON_BN_CLICKED(IDC_BUTTON_MUTE_INPUT, &MessagesDlg::OnBnClickedMuteInput)
 	ON_BN_CLICKED(IDC_HOLD, &MessagesDlg::OnBnClickedHold)
 	ON_BN_CLICKED(IDC_END, &MessagesDlg::OnBnClickedEnd)
 	ON_BN_CLICKED(IDC_CLOSE_ALL, &MessagesDlg::OnBnClickedCloseAll)
@@ -1149,27 +1152,26 @@ void MessagesDlg::UpdateHoldButton(pjsua_call_info *call_info)
 		mainDlg->pageDialer->m_ButtonConf.EnableWindow(hasActions);
 	}
 	//--
-	if (hasHold) {
+	if (buttonHold && buttonHold->GetSafeHwnd()) {
 		buttonHold->ShowWindow(SW_SHOW);
-		buttonHoldDialer->EnableWindow(TRUE);
+		buttonHold->EnableWindow(hasHold ? TRUE : FALSE);
+		if (onHold) {
+			buttonHold->SetCheck(TRUE);
+			buttonHold->SetWindowText(_T("Resume"));
+			if (m_hIconResume) buttonHold->SetIcon(m_hIconResume);
+		}
+		else {
+			buttonHold->SetCheck(FALSE);
+			buttonHold->SetWindowText(_T("Hold"));
+			if (m_hIconHold) buttonHold->SetIcon(m_hIconHold);
+		}
 	}
-	else {
-		buttonHold->ShowWindow(SW_HIDE);
-		buttonHoldDialer->EnableWindow(FALSE);
+	if (buttonHoldDialer && buttonHoldDialer->GetSafeHwnd()) {
+		buttonHoldDialer->EnableWindow(hasHold ? TRUE : FALSE);
+		buttonHoldDialer->SetCheck(onHold ? TRUE : FALSE);
+		buttonHoldDialer->SetIcon(onHold ? mainDlg->pageDialer->m_hIconResume : mainDlg->pageDialer->m_hIconHold);
 	}
-	//--
-	if (onHold) {
-		buttonHold->SetCheck(TRUE);
-		buttonHold->SetIcon(m_hIconResume);
-		buttonHoldDialer->SetCheck(TRUE);
-		buttonHoldDialer->SetIcon(mainDlg->pageDialer->m_hIconResume);
-	}
-	else {
-		buttonHold->SetCheck(FALSE);
-		buttonHold->SetIcon(m_hIconHold);
-		buttonHoldDialer->SetCheck(FALSE);
-		buttonHoldDialer->SetIcon(mainDlg->pageDialer->m_hIconHold);
-	}
+	UpdateMuteButton();
 	//--
 }
 
@@ -1620,6 +1622,27 @@ void MessagesDlg::OnBnClickedHold()
 				msip_call_hold(&call_info);
 			}
 		}
+	}
+}
+
+void MessagesDlg::OnBnClickedMuteInput()
+{
+	if (mainDlg && mainDlg->pageDialer) {
+		mainDlg->pageDialer->OnBnClickedMuteInput();
+	}
+	UpdateMuteButton();
+}
+
+void MessagesDlg::UpdateMuteButton()
+{
+	CButton* btn = (CButton*)GetDlgItem(IDC_BUTTON_MUTE_INPUT);
+	if (btn && btn->GetSafeHwnd()) {
+		MessagesContact* mc = GetMessageContact();
+		bool hasCall = (mc && mc->callId != -1);
+		btn->EnableWindow(hasCall ? TRUE : FALSE);
+		bool isMuted = (mainDlg && mainDlg->pageDialer) ? mainDlg->pageDialer->muteInput : false;
+		btn->SetCheck(isMuted ? BST_CHECKED : BST_UNCHECKED);
+		btn->SetWindowText(isMuted ? _T("Unmute") : _T("Mute"));
 	}
 }
 
@@ -2119,6 +2142,7 @@ void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
 			}
 			SetWindowText(title);
 		}
+		UpdateMuteButton();
 	}
 	CBaseDialog::OnTimer(nIDEvent);
 }
