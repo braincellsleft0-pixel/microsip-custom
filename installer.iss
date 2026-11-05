@@ -22,7 +22,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "pjproject\microsip\Release\microsip.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Release\microsip.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\MicroSIP"; Filename: "{app}\microsip.exe"
