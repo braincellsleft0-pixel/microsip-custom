@@ -75,10 +75,13 @@ jobs:
           msbuild microsip.vcxproj /p:PlatformToolset=v143 /p:Configuration=Release /p:Platform=Win32 /p:WindowsTargetPlatformVersion=10.0 /m
         shell: cmd
 
-      - name: Build Windows Setup Installer
+      - name: Code Sign and Build Windows Setup Installer
         run: |
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=MicroSIP" -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(10)
+          Set-AuthenticodeSignature -FilePath "pjproject\microsip\Release\microsip.exe" -Certificate $cert -TimestampServer "http://timestamp.digicert.com" -HashAlgorithm SHA256
           choco install innosetup --yes --no-progress
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" pjproject\microsip\installer.iss
+          Set-AuthenticodeSignature -FilePath "pjproject\microsip\MicroSIP-Minimalist-Setup.exe" -Certificate $cert -TimestampServer "http://timestamp.digicert.com" -HashAlgorithm SHA256
         shell: powershell
 
       - name: Upload Artifacts
