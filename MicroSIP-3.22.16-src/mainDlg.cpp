@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -601,6 +601,7 @@ static void on_call_media_state(pjsua_call_id call_id)
 	if (call_info->media_status == PJSUA_CALL_MEDIA_ACTIVE
 		|| call_info->media_status == PJSUA_CALL_MEDIA_REMOTE_HOLD
 		) {
+		msip_set_sound_device(msip_audio_output, true);
 		msip_conference_join(call_info);
 		pjsua_conf_connect(call_info->conf_slot, 0);
 		pjsua_conf_connect(0, call_info->conf_slot);
@@ -2922,6 +2923,7 @@ void CmainDlg::PJCreateRaw()
 	// Initialize configs with default settings.
 	pjsua_config_default(&ua_cfg);
 	pjsua_media_config_default(&media_cfg);
+	media_cfg.snd_clock_rate = 48000;
 
 	CString userAgent;
 	if (accountSettings.userAgent.IsEmpty()) {

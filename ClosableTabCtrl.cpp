@@ -125,11 +125,10 @@ void CClosableTabCtrl::OnMButtonUp(UINT nFlags, CPoint point)
 void CClosableTabCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	if (iTabClose != -1) {
-		GetParent()->SendMessage(UM_CLOSETAB, (WPARAM)iTabClose);
 		iTabClose = -1;
-	} else {
-		CTabCtrl::OnLButtonUp(nFlags, point);
+		return;
 	}
+	CTabCtrl::OnLButtonUp(nFlags, point);
 }
 
 void CClosableTabCtrl::OnLButtonDown(UINT nFlags, CPoint point)
@@ -141,22 +140,18 @@ void CClosableTabCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			CRect rcItem;
 			GetItemRect(iTab, rcItem);
-			rcItem.InflateRect(2, 2); // get the real tab item rect
 			
 			bool bVistaThemeActive = IsVistaThemeActive();
 			CRect rcCloseButton;
 			GetCloseButtonRect(iTab, rcItem, rcCloseButton, iTab == GetCurSel(), bVistaThemeActive);
+			rcCloseButton.InflateRect(6, 6);
 
-			// The visible part of our close icon is one pixel less on each side
-			if (!bVistaThemeActive) {
-				rcCloseButton.top += 1;
-				rcCloseButton.left += 1;
-				rcCloseButton.right -= 1;
-				rcCloseButton.bottom -= 1;
-			}
+			CRect rcRightEdge = rcItem;
+			rcRightEdge.left = rcRightEdge.right - 26;
 
-			if (rcCloseButton.PtInRect(point)) {
+			if (rcCloseButton.PtInRect(point) || rcRightEdge.PtInRect(point)) {
 				iTabClose = iTab;
+				GetParent()->SendMessage(UM_CLOSETAB, (WPARAM)iTab);
 				return;
 			}
 		}

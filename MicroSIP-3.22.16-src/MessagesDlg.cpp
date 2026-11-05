@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -285,10 +285,27 @@ LRESULT MessagesDlg::OnContextMenu(WPARAM wParam, LPARAM lParam)
 
 void MessagesDlg::OnClose()
 {
-	call_hangup_all_noincoming();
+	call_hangup_all();
+	if (pjsua_var.state == PJSUA_STATE_RUNNING) {
+		pjsua_call_hangup_all();
+	}
+	if (tab) {
+		while (tab->GetItemCount() > 0) {
+			MessagesContact* mc = GetMessageContact(0);
+			if (mc) {
+				if (mc->callId != -1) {
+					pjsua_call_id cid = mc->callId;
+					mc->callId = -1;
+					msip_call_hangup_fast(cid);
+					pjsua_call_hangup(cid, 0, NULL, NULL);
+				}
+				delete mc;
+			}
+			tab->DeleteItem(0);
+		}
+	}
 	ShowWindow(SW_HIDE);
 	mainDlg->PostMessage(UM_NOTIFYICON, NULL, WM_LBUTTONUP);
-
 }
 
 void MessagesDlg::OnMove(int x, int y)
@@ -316,20 +333,6 @@ void MessagesDlg::OnSize(UINT type, int w, int h)
 
 void MessagesDlg::OnCancel()
 {
-	MessagesContact* messagesContact = GetMessageContact();
-	if (messagesContact) {
-		if (messagesContact->callId != -1) {
-			OnBnClickedEnd();
-			return;
-		}
-		OnGoToLastTab();
-		MessagesContact* messagesContactLast = GetMessageContact();
-		if (messagesContactLast) {
-			if (messagesContactLast != messagesContact) {
-				return;
-			}
-		}
-	}
 	OnClose();
 }
 
@@ -702,7 +705,10 @@ BOOL MessagesDlg::CloseTab(int i, BOOL safe)
 			if (safe) {
 				return FALSE;
 			}
-			msip_call_hangup_fast(messagesContact->callId);
+			pjsua_call_id cid = messagesContact->callId;
+			messagesContact->callId = -1;
+			msip_call_hangup_fast(cid);
+			pjsua_call_hangup(cid, 0, NULL, NULL);
 		}
 		delete messagesContact;
 		tab->DeleteItem(i);
@@ -1987,15 +1993,7 @@ void MessagesDlg::OnBnClickedEnd()
 
 void MessagesDlg::OnCloseAllTabs()
 {
-	int i = 0;
-	while (i < tab->GetItemCount()) {
-		if (CloseTab(i, TRUE)) {
-			i = 0;
-		}
-		else {
-			i++;
-		}
-	}
+	OnClose();
 }
 
 void MessagesDlg::OnGoToLastTab()
