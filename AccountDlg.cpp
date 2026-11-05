@@ -20,7 +20,8 @@
 #include "define.h"
 
 #include "AccountDlg.h"
-#include "mainDlg.h"
+#include "mainDlg.h"
+#include "global.h"
 #include "langpack.h"
 #include "utf.h"
 #include "atlrx.h"
@@ -62,6 +63,61 @@ int AccountDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 BOOL AccountDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
+	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
+	if (accountSettings.darkMode) {
+		msip_set_window_dark_mode(m_hWnd, TRUE);
+	}
+
+	CRect rcWindow;
+	GetWindowRect(rcWindow);
+	m_szMin = rcWindow.Size();
+
+	CRect rcClient;
+	GetClientRect(rcClient);
+	m_szInitial = rcClient.Size();
+
+	m_ctrls.clear();
+	HWND hChild = ::GetWindow(m_hWnd, GW_CHILD);
+	while (hChild) {
+		int id = ::GetDlgCtrlID(hChild);
+		CRect rc;
+		::GetWindowRect(hChild, rc);
+		ScreenToClient(rc);
+		CtrlInfo ci;
+		ci.hWnd = hChild;
+		ci.rc = rc;
+		ci.moveX = false;
+		ci.moveY = false;
+		ci.sizeX = false;
+
+		if (id == IDOK || id == IDCANCEL) {
+			ci.moveY = true;
+			ci.moveX = true;
+		} else if (id == IDC_ACCOUNT_REMOVE) {
+			ci.moveY = true;
+		} else if (id == IDC_SYSLINK_SIP_SERVER || id == IDC_SYSLINK_SIP_PROXY ||
+				   id == IDC_SYSLINK_USERNAME || id == IDC_SYSLINK_DOMAIN ||
+				   id == IDC_SYSLINK_AUTHID || id == IDC_SYSLINK_PASSWORD ||
+				   id == IDC_SYSLINK_NAME || id == IDC_SYSLINK_VOICEMAIL ||
+				   id == IDC_ACCOUNT_HELP_DIALING_PREFIX || id == IDC_ACCOUNT_HELP_DIAL_PLAN ||
+				   id == IDC_ACCOUNT_HELP_HIDE_CID || id == IDC_SYSLINK_ENCRYPTION ||
+				   id == IDC_SYSLINK_TRANSPORT || id == IDC_SYSLINK_PUBLIC_ADDRESS ||
+				   id == IDC_SYSLINK_PUBLISH_PRESENCE || id == IDC_SYSLINK_REWRITE ||
+				   id == IDC_SYSLINK_ICE || id == IDC_SYSLINK_SESSION_TIMER ||
+				   id == IDC_SYSLINK_DISPLAY_PASSWORD) {
+			ci.moveX = true;
+		} else if (id == IDC_ACCOUNT_LABEL || id == IDC_EDIT_SERVER || id == IDC_EDIT_PROXY ||
+				   id == IDC_EDIT_USERNAME || id == IDC_EDIT_DOMAIN || id == IDC_EDIT_LOGIN ||
+				   id == IDC_EDIT_PASSWORD || id == IDC_EDIT_NAME || id == IDC_EDIT_VOICEMAIL ||
+				   id == IDC_ACCOUNT_DIALING_PREFIX || id == IDC_ACCOUNT_DIAL_PLAN ||
+				   id == IDC_SRTP || id == IDC_TRANSPORT || id == IDC_PUBLIC_ADDR) {
+			ci.sizeX = true;
+		}
+		m_ctrls.push_back(ci);
+		hChild = ::GetWindow(hChild, GW_HWNDNEXT);
+	}
 
 	TranslateDialog(this->m_hWnd);
 
@@ -627,3 +683,54 @@ void AccountDlg::OnChangePassword()
 }
 
 
+
+void AccountDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+	if (m_szInitial.cx <= 0 || m_szInitial.cy <= 0) return;
+	int dx = cx - m_szInitial.cx;
+	int dy = cy - m_szInitial.cy;
+
+	HDWP hDwp = BeginDeferWindowPos((int)m_ctrls.size());
+	for (size_t i = 0; i < m_ctrls.size(); ++i) {
+		const CtrlInfo& ci = m_ctrls[i];
+		if (::IsWindow(ci.hWnd)) {
+			int newX = ci.rc.left + (ci.moveX ? dx : 0);
+			int newY = ci.rc.top + (ci.moveY ? dy : 0);
+			int newW = ci.rc.Width() + (ci.sizeX ? dx : 0);
+			int newH = ci.rc.Height();
+			hDwp = DeferWindowPos(hDwp, ci.hWnd, NULL, newX, newY, newW, newH, SWP_NOZORDER | SWP_NOACTIVATE);
+		}
+	}
+	if (hDwp) EndDeferWindowPos(hDwp);
+	Invalidate();
+}
+
+void AccountDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	CDialog::OnGetMinMaxInfo(lpMMI);
+	if (m_szMin.cx > 0) {
+		lpMMI->ptMinTrackSize.x = m_szMin.cx;
+		lpMMI->ptMinTrackSize.y = m_szMin.cy;
+	}
+}
+
+HBRUSH AccountDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (accountSettings.darkMode) {
+		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
+			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetBkColor(RGB(32, 32, 32));
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
+			pDC->SetTextColor(RGB(245, 245, 245));
+			pDC->SetBkColor(RGB(45, 45, 45));
+			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_BTN) {
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+	}
+	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+}

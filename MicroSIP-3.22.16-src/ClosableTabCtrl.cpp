@@ -318,7 +318,9 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 			rectFill.right = rect.right-1;
 			rectFill.bottom = rect.bottom;
 			COLORREF clref = ::GetSysColor(COLOR_BTNFACE);
-			if (bSelected) {
+			if (accountSettings.darkMode) {
+				clref = bSelected ? RGB(50, 50, 50) : RGB(32, 32, 32);
+			} else if (bSelected) {
 				BYTE r = GetRValue(clref);
 				BYTE g = GetGValue(clref);
 				BYTE b = GetBValue(clref);
@@ -378,7 +380,11 @@ void CClosableTabCtrl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	if (tci.dwState & TCIS_HIGHLIGHTED)
 		crOldColor = pDC->SetTextColor(RGB(192, 0, 0));
 	else if (bVistaHotTracked)
-		crOldColor = pDC->SetTextColor(GetSysColor(COLOR_BTNTEXT));
+		if (accountSettings.darkMode) {
+			crOldColor = pDC->SetTextColor(bSelected ? RGB(255, 255, 255) : RGB(190, 190, 190));
+		} else {
+			crOldColor = pDC->SetTextColor(GetSysColor(COLOR_BTNTEXT));
+		}
 
 	rect.top += bSelected ? 4 : 3;
 	pDC->DrawText(szLabel, rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);

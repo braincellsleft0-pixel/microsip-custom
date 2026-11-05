@@ -1,3 +1,4 @@
+#include <vector>
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -51,6 +52,23 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedDelete();
 	afx_msg void OnChangePassword();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
+private:
+	CSize m_szMin;
+	CSize m_szInitial;
+	struct CtrlInfo {
+		HWND hWnd;
+		CRect rc;
+		bool moveX;
+		bool moveY;
+		bool sizeX;
+	};
+	std::vector<CtrlInfo> m_ctrls;
+	CBrush m_brDarkBg;
+	CBrush m_brDarkEdit;
 	afx_msg void OnNMClickSyslinkSipServer(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMClickSyslinkSipProxy(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMClickSyslinkUsername(NMHDR *pNMHDR, LRESULT *pResult);

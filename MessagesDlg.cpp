@@ -91,6 +91,11 @@ void MessagesDlg::DoDataExchange(CDataExchange* pDX)
 BOOL MessagesDlg::OnInitDialog()
 {
 	CBaseDialog::OnInitDialog();
+	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
+	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
+	if (accountSettings.darkMode) {
+		msip_set_window_dark_mode(m_hWnd, TRUE);
+	}
 
 	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
 	AutoMove(IDC_CALL_MUTE, 100, 0, 0, 0);
@@ -2208,4 +2213,23 @@ void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
 		UpdateMuteButton();
 	}
 	CBaseDialog::OnTimer(nIDEvent);
+}
+HBRUSH MessagesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (accountSettings.darkMode) {
+		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
+			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetBkColor(RGB(32, 32, 32));
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
+			pDC->SetTextColor(RGB(245, 245, 245));
+			pDC->SetBkColor(RGB(45, 45, 45));
+			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_BTN) {
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+	}
+	return CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }

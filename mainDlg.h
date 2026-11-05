@@ -247,7 +247,11 @@ public:
 	afx_msg void OnMenuCustomRange(UINT nID);
 	afx_msg void OnMenuSettings();
 	afx_msg void OnMenuShortcuts();
-	afx_msg void OnMenuAlwaysOnTop();
+	afx_msg void OnMenuAlwaysOnTop();
+	afx_msg void OnMenuDarkMode();
+	void ApplyDarkMode(bool enable);
+	CBrush m_brDarkBg;
+	CBrush m_brDarkEdit;
 	afx_msg void OnMenuLog();
 	afx_msg void OnMenuExit();
 	afx_msg void OnTimer (UINT_PTR TimerVal);

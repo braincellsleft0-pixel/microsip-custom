@@ -1641,7 +1641,8 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
 	ON_MESSAGE(UM_UPDATE_CHECKER_LOADED, OnUpdateCheckerLoaded)
 	ON_COMMAND(ID_SETTINGS, OnMenuSettings)
 	ON_COMMAND(ID_SHORTCUTS, OnMenuShortcuts)
-	ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
+	ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
+	ON_COMMAND(ID_DARK_MODE, OnMenuDarkMode)
 	ON_COMMAND(ID_LOG, OnMenuLog)
 	ON_COMMAND(ID_EXIT, OnMenuExit)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_MAIN_TAB, &CmainDlg::OnTcnSelchangeTab)
@@ -1840,6 +1841,11 @@ BOOL CmainDlg::OnInitDialog()
 	CreateThread(NULL, 0, NetworkChangeThread, 0, 0, NULL);
 
 	pj_ready = false;
+	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
+	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
+	if (accountSettings.darkMode) {
+		msip_set_window_dark_mode(m_hWnd, TRUE);
+	}
 
 	settingsDlg = NULL;
 	shortcutsDlg = NULL;
@@ -2423,6 +2429,7 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
 			separator = true;
 		}
 		tracker->AppendMenu(MF_STRING | (accountSettings.alwaysOnTop ? MF_CHECKED : 0), ID_ALWAYS_ON_TOP, Translate(_T("Always on Top")));
+		tracker->AppendMenu(MF_STRING | (accountSettings.darkMode ? MF_CHECKED : 0), ID_DARK_MODE, Translate(_T("Dark Mode")));
 	}
 			if (!separator) {
 				tracker->AppendMenu(MF_SEPARATOR);
@@ -3356,6 +3363,11 @@ void CmainDlg::PJDestroy(bool exit)
 		}
 
 		pj_ready = false;
+	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
+	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
+	if (accountSettings.darkMode) {
+		msip_set_window_dark_mode(m_hWnd, TRUE);
+	}
 
 		//if (transport_udp_local!=PJSUA_INVALID_ID && transport_udp_local!=transport_udp) {
 		//	pjsua_transport_close(transport_udp_local,PJ_TRUE);
@@ -4714,6 +4726,21 @@ void CmainDlg::OnClose()
 
 HBRUSH CmainDlg::OnCtlColor(CDC* pDC, CWnd *pWnd, UINT nCtlColor)
 {
+	if (accountSettings.darkMode) {
+		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
+			pDC->SetTextColor(RGB(230, 230, 230));
+			pDC->SetBkColor(RGB(32, 32, 32));
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
+			pDC->SetTextColor(RGB(245, 245, 245));
+			pDC->SetBkColor(RGB(45, 45, 45));
+			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
+		}
+		if (nCtlColor == CTLCOLOR_BTN) {
+			return (HBRUSH)m_brDarkBg.GetSafeHandle();
+		}
+	}
 	HBRUSH br = CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 	return br;
 }
@@ -5451,3 +5478,24 @@ void CmainDlg::Unsubscribe()
 	isSubscribed = false;
 }
 
+
+void CmainDlg::OnMenuDarkMode()
+{
+	accountSettings.darkMode = !accountSettings.darkMode;
+	AccountSettingsPendingSave();
+	ApplyDarkMode(accountSettings.darkMode);
+}
+
+void CmainDlg::ApplyDarkMode(bool enable)
+{
+	msip_set_window_dark_mode(m_hWnd, enable);
+	if (messagesDlg && messagesDlg->m_hWnd) {
+		msip_set_window_dark_mode(messagesDlg->m_hWnd, enable);
+		messagesDlg->Invalidate();
+	}
+	if (accountDlg && accountDlg->m_hWnd) {
+		msip_set_window_dark_mode(accountDlg->m_hWnd, enable);
+		accountDlg->Invalidate();
+	}
+	Invalidate();
+}

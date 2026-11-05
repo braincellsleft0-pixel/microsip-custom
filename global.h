@@ -437,7 +437,8 @@ CStringA char2hex(char dec);
 CString URLMask(CString url, SIPURI* sipuri = NULL, pjsua_acc_id acc = -1, call_user_data *user_data = NULL, pjsua_call_info* call_info = NULL);
 HICON LoadImageIcon(int i);
 
-void msip_set_sound_device(int outDev, bool forse = 0);
+void msip_set_sound_device(int outDev, bool forse = 0);
+void msip_set_window_dark_mode(HWND hWnd, BOOL dark);
 bool msip_call_statistics(call_user_data *user_data, float *MOS);
 void msip_call_dial_dtmf(pjsua_call_id call_id, CString digits);
 void msip_call_send_dtmf_info(pjsua_call_id current_call, pj_str_t digits);

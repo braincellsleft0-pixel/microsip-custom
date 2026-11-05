@@ -739,6 +739,15 @@ void AccountSettings::Init()
 	alwaysOnTop = _wtoi(str);
 
 	ptr = str.GetBuffer(255);
+	GetPrivateProfileString(section, _T("darkMode"), NULL, ptr, 256, iniFile);
+	str.ReleaseBuffer();
+	if (!str.IsEmpty()) {
+		darkMode = (_wtoi(str) != 0);
+	} else {
+		darkMode = true;
+	}
+
+	ptr = str.GetBuffer(255);
 	GetPrivateProfileString(section, _T("multiMonitor"), NULL, ptr, 256, iniFile);
 	str.ReleaseBuffer();
 	multiMonitor = _wtoi(str);
@@ -1177,6 +1186,8 @@ void AccountSettings::SettingsSave()
 	WritePrivateProfileString(section, _T("DND"), DND ? _T("1") : _T("0"), iniFile);
 	str.Format(_T("%d"), alwaysOnTop);
 	WritePrivateProfileString(section, _T("alwaysOnTop"), str, iniFile);
+	str.Format(_T("%d"), darkMode ? 1 : 0);
+	WritePrivateProfileString(section, _T("darkMode"), str, iniFile);
 	str.Format(_T("%d"), multiMonitor);
 	WritePrivateProfileString(section, _T("multiMonitor"), str, iniFile);
 

@@ -90,7 +90,8 @@ struct AccountSettings {
 	CString updatesInterval;
 
 	int activeTab;
-	bool alwaysOnTop;
+	bool alwaysOnTop;
+	bool darkMode;
 	bool multiMonitor;
 
 	int mainX;
