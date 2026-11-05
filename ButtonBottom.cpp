@@ -1,4 +1,3 @@
-﻿#include "settings.h"
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -64,13 +63,8 @@ void CButtonBottom::UpdateColor(int nCheck)
 //		SetFaceColor(RGB(255, 0, 0), true);
 		SetFaceColor(RGB(11, 91, 202), true);
 	} else {
-		if (accountSettings.darkMode) {
-			SetTextColor(RGB(220, 220, 220));
-			SetFaceColor(RGB(45, 45, 45));
-		} else {
-			SetTextColor(textColor);
-			SetFaceColor(faceColor);
-		}
+		SetTextColor(textColor);
+		SetFaceColor(faceColor);
 	}
 }
 

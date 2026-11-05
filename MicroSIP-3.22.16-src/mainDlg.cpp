@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
 #define THIS_FILENAME "mainDlg.cpp"
 
 #include "mainDlg.h"
-
 #include "microsip.h"
 
 #include "Mmsystem.h"
@@ -1591,8 +1590,6 @@ void CmainDlg::DoDataExchange(CDataExchange* pDX)
 	CBaseDialog::DoDataExchange(pDX);
 	//	DDX_Control(pDX, IDD_MAIN, *mainDlg);
 	DDX_Control(pDX, IDC_MAIN_MENU, m_ButtonMenu);
-	DDX_Control(pDX, IDC_MAIN_TAB, m_tabMain);
-	DDX_Control(pDX, IDC_DARK_MODE_BTN, m_ButtonDarkMode);
 }
 
 BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
@@ -1610,8 +1607,6 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 	ON_BN_CLICKED(IDC_MAIN_MENU, OnBnClickedMenu)
-	ON_BN_CLICKED(IDC_DARK_MODE_BTN, OnBnClickedDarkMode)
-	ON_WM_ERASEBKGND()
 	ON_MESSAGE(UM_UPDATEWINDOWTEXT, OnUpdateWindowText)
 	ON_MESSAGE(UM_NOTIFYICON, onTrayNotify)
 	ON_MESSAGE(UM_CREATE_RINGING, onCreateRingingDlg)
@@ -1647,8 +1642,6 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
 	ON_COMMAND(ID_SETTINGS, OnMenuSettings)
 	ON_COMMAND(ID_SHORTCUTS, OnMenuShortcuts)
 	ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
-
-	ON_COMMAND(ID_DARK_MODE, OnMenuDarkMode)
 	ON_COMMAND(ID_LOG, OnMenuLog)
 	ON_COMMAND(ID_EXIT, OnMenuExit)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_MAIN_TAB, &CmainDlg::OnTcnSelchangeTab)
@@ -1847,11 +1840,6 @@ BOOL CmainDlg::OnInitDialog()
 	CreateThread(NULL, 0, NetworkChangeThread, 0, 0, NULL);
 
 	pj_ready = false;
-	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
-	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
-	if (accountSettings.darkMode) {
-		msip_set_window_dark_mode(m_hWnd, TRUE);
-	}
 
 	settingsDlg = NULL;
 	shortcutsDlg = NULL;
@@ -2008,13 +1996,6 @@ BOOL CmainDlg::OnInitDialog()
 
 	AutoMove(tab->m_hWnd, 0, 0, 100, 0);
 	AutoMove(m_ButtonMenu.m_hWnd, 100, 0, 0, 0);
-	AutoMove(m_ButtonDarkMode.m_hWnd, 100, 0, 0, 0);
-	m_ButtonDarkMode.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_ButtonDarkMode.m_bTransparent = FALSE;
-	m_ButtonMenu.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_ButtonMenu.m_bTransparent = FALSE;
-	m_tabMain.m_bCloseable = false;
-	UpdateThemeButtonUI();
 
 	BYTE offset = tabRect.bottom - 1;
 	CRect pageRect;
@@ -2442,7 +2423,6 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
 			separator = true;
 		}
 		tracker->AppendMenu(MF_STRING | (accountSettings.alwaysOnTop ? MF_CHECKED : 0), ID_ALWAYS_ON_TOP, Translate(_T("Always on Top")));
-		tracker->AppendMenu(MF_STRING | (accountSettings.darkMode ? MF_CHECKED : 0), ID_DARK_MODE, Translate(_T("Dark Mode")));
 	}
 			if (!separator) {
 				tracker->AppendMenu(MF_SEPARATOR);
@@ -3376,11 +3356,6 @@ void CmainDlg::PJDestroy(bool exit)
 		}
 
 		pj_ready = false;
-	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
-	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
-	if (accountSettings.darkMode) {
-		msip_set_window_dark_mode(m_hWnd, TRUE);
-	}
 
 		//if (transport_udp_local!=PJSUA_INVALID_ID && transport_udp_local!=transport_udp) {
 		//	pjsua_transport_close(transport_udp_local,PJ_TRUE);
@@ -4739,21 +4714,6 @@ void CmainDlg::OnClose()
 
 HBRUSH CmainDlg::OnCtlColor(CDC* pDC, CWnd *pWnd, UINT nCtlColor)
 {
-	if (accountSettings.darkMode) {
-		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
-			pDC->SetTextColor(RGB(230, 230, 230));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
-			pDC->SetTextColor(RGB(245, 245, 245));
-			pDC->SetBkColor(RGB(45, 45, 45));
-			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_BTN) {
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-	}
 	HBRUSH br = CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 	return br;
 }
@@ -5491,93 +5451,3 @@ void CmainDlg::Unsubscribe()
 	isSubscribed = false;
 }
 
-
-void CmainDlg::UpdateThemeButtonUI()
-{
-	if (!m_ButtonDarkMode.m_hWnd) return;
-	if (accountSettings.darkMode) {
-		m_ButtonDarkMode.SetWindowText(_T("Light"));
-		m_ButtonDarkMode.SetFaceColor(RGB(50, 50, 50));
-		m_ButtonDarkMode.SetTextColor(RGB(240, 240, 240));
-		m_ButtonMenu.SetFaceColor(RGB(50, 50, 50));
-		m_ButtonMenu.SetTextColor(RGB(240, 240, 240));
-	} else {
-		m_ButtonDarkMode.SetWindowText(_T("Dark"));
-		m_ButtonDarkMode.SetFaceColor(RGB(235, 235, 235));
-		m_ButtonDarkMode.SetTextColor(RGB(0, 0, 0));
-		m_ButtonMenu.SetFaceColor(RGB(235, 235, 235));
-		m_ButtonMenu.SetTextColor(RGB(0, 0, 0));
-	}
-	m_ButtonDarkMode.Invalidate();
-	m_ButtonMenu.Invalidate();
-}
-
-void CmainDlg::OnBnClickedDarkMode()
-{
-	OnMenuDarkMode();
-}
-
-void CmainDlg::OnMenuDarkMode()
-{
-	accountSettings.darkMode = !accountSettings.darkMode;
-	AccountSettingsPendingSave();
-	ApplyDarkMode(accountSettings.darkMode);
-	UpdateThemeButtonUI();
-}
-
-void CmainDlg::ApplyDarkMode(bool enable)
-{
-	msip_set_window_dark_mode(m_hWnd, enable);
-	if (m_bar.m_hWnd) {
-		SetWindowTheme(m_bar.m_hWnd, enable ? L"" : NULL, enable ? L"" : NULL);
-		m_bar.Invalidate();
-	}
-	if (m_tabMain.m_hWnd) {
-		SetWindowTheme(m_tabMain.m_hWnd, enable ? L"" : NULL, enable ? L"" : NULL);
-		m_tabMain.Invalidate();
-	}
-	if (pageDialer && pageDialer->m_hWnd) {
-		msip_set_window_dark_mode(pageDialer->m_hWnd, enable);
-		pageDialer->UpdateButtonsDarkTheme();
-		pageDialer->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	}
-	if (pageCalls && pageCalls->m_hWnd) {
-		pageCalls->m_SortItemsExListCtrl.SetBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
-		pageCalls->m_SortItemsExListCtrl.SetTextBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
-		pageCalls->m_SortItemsExListCtrl.SetTextColor(enable ? RGB(220, 220, 220) : RGB(0, 0, 0));
-		SetWindowTheme(pageCalls->m_SortItemsExListCtrl.m_hWnd, enable ? L"DarkMode_Explorer" : NULL, NULL);
-		msip_set_window_dark_mode(pageCalls->m_hWnd, enable);
-		pageCalls->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	}
-	if (pageContacts && pageContacts->m_hWnd) {
-		pageContacts->m_SortItemsExListCtrl.SetBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
-		pageContacts->m_SortItemsExListCtrl.SetTextBkColor(enable ? RGB(32, 32, 32) : RGB(255, 255, 255));
-		pageContacts->m_SortItemsExListCtrl.SetTextColor(enable ? RGB(220, 220, 220) : RGB(0, 0, 0));
-		SetWindowTheme(pageContacts->m_SortItemsExListCtrl.m_hWnd, enable ? L"DarkMode_Explorer" : NULL, NULL);
-		msip_set_window_dark_mode(pageContacts->m_hWnd, enable);
-		pageContacts->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	}
-	if (messagesDlg && messagesDlg->m_hWnd) {
-		msip_set_window_dark_mode(messagesDlg->m_hWnd, enable);
-		messagesDlg->UpdateMuteButton();
-		messagesDlg->UpdateHoldButton(NULL);
-		messagesDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	}
-	if (accountDlg && accountDlg->m_hWnd) {
-		msip_set_window_dark_mode(accountDlg->m_hWnd, enable);
-		accountDlg->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	}
-	UpdateThemeButtonUI();
-	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-}
-
-BOOL CmainDlg::OnEraseBkgnd(CDC* pDC)
-{
-	if (accountSettings.darkMode) {
-		CRect rc;
-		GetClientRect(&rc);
-		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
-		return TRUE;
-	}
-	return CBaseDialog::OnEraseBkgnd(pDC);
-}

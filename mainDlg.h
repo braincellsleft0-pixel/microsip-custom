@@ -1,4 +1,3 @@
-﻿#include <afxbutton.h>
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -71,12 +70,7 @@ public:
 	enum { IDD = IDD_MAIN };
 
 	bool m_startMinimized;
-	CMFCButton m_ButtonMenu;
-	CMFCButton m_ButtonDarkMode;
-	CClosableTabCtrl m_tabMain;
-	void UpdateThemeButtonUI();
-	afx_msg void OnBnClickedDarkMode();
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	CButton m_ButtonMenu;
 	SettingsDlg* settingsDlg;
 	bool shortcutsEnabled;
 	bool shortcutsBottom;
@@ -254,14 +248,6 @@ public:
 	afx_msg void OnMenuSettings();
 	afx_msg void OnMenuShortcuts();
 	afx_msg void OnMenuAlwaysOnTop();
-
-	afx_msg void OnMenuDarkMode();
-
-	void ApplyDarkMode(bool enable);
-
-	CBrush m_brDarkBg;
-
-	CBrush m_brDarkEdit;
 	afx_msg void OnMenuLog();
 	afx_msg void OnMenuExit();
 	afx_msg void OnTimer (UINT_PTR TimerVal);

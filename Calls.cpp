@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -88,12 +88,6 @@ BOOL Calls::OnInitDialog()
 void Calls::OnCreated()
 {
 	m_SortItemsExListCtrl.SetSortColumn(2, false);
-	if (accountSettings.darkMode) {
-		m_SortItemsExListCtrl.SetBkColor(RGB(32, 32, 32));
-		m_SortItemsExListCtrl.SetTextBkColor(RGB(32, 32, 32));
-		m_SortItemsExListCtrl.SetTextColor(RGB(220, 220, 220));
-		SetWindowTheme(m_SortItemsExListCtrl.m_hWnd, L"DarkMode_Explorer", NULL);
-	}
 }
 
 void Calls::PostNcDestroy()

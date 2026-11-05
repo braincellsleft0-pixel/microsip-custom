@@ -393,7 +393,6 @@ CString get_public_addr(Account *account = NULL);
 struct call_tonegen_data *call_init_tonegen(pjsua_call_id call_id);
 BOOL call_play_digit(pjsua_call_id call_id, const char *digits, int duration = 160);
 void call_deinit_tonegen(pjsua_call_id call_id);
-void call_play_busy_tone();
 void destroyDTMFPlayerTimerHandler(
   HWND hwnd,
   UINT uMsg,
@@ -439,8 +438,6 @@ CString URLMask(CString url, SIPURI* sipuri = NULL, pjsua_acc_id acc = -1, call_
 HICON LoadImageIcon(int i);
 
 void msip_set_sound_device(int outDev, bool forse = 0);
-
-void msip_set_window_dark_mode(HWND hWnd, BOOL dark);
 bool msip_call_statistics(call_user_data *user_data, float *MOS);
 void msip_call_dial_dtmf(pjsua_call_id call_id, CString digits);
 void msip_call_send_dtmf_info(pjsua_call_id current_call, pj_str_t digits);
@@ -455,3 +452,5 @@ void msip_call_recording_start(call_user_data *user_data, pjsua_call_info *call_
 void msip_call_recording_stop(call_user_data *user_data, int id = 0, bool force = false);
 CString msip_url_mask(CString url);
 void msip_startup_set(bool enable);
+
+void call_play_busy_tone();

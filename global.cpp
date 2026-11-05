@@ -1558,43 +1558,6 @@ void msip_startup_set(bool enable)
 	}
 }
 
-#include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
-
-#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
-#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
-#endif
-#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE_OLD
-#define DWMWA_USE_IMMERSIVE_DARK_MODE_OLD 19
-#endif
-
-static BOOL CALLBACK EnumSetDarkChild(HWND hWnd, LPARAM lParam)
-{
-	BOOL dark = (BOOL)lParam;
-	WCHAR className[64] = {0};
-	if (GetClassNameW(hWnd, className, 64)) {
-		if (_wcsicmp(className, L"SysListView32") == 0 ||
-			_wcsicmp(className, L"SysTreeView32") == 0 ||
-			_wcsicmp(className, L"ComboBox") == 0) {
-			SetWindowTheme(hWnd, dark ? L"DarkMode_Explorer" : NULL, NULL);
-		}
-	}
-	return TRUE;
-}
-
-void msip_set_window_dark_mode(HWND hWnd, BOOL dark)
-{
-	if (hWnd && ::IsWindow(hWnd)) {
-		BOOL val = dark;
-		if (FAILED(DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
-			DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, &val, sizeof(val));
-		}
-		EnumChildWindows(hWnd, EnumSetDarkChild, (LPARAM)dark);
-		::RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
-	}
-}
-
-
 void call_play_busy_tone()
 {
 	if (pjsua_var.state != PJSUA_STATE_RUNNING) {
@@ -1615,16 +1578,12 @@ void call_play_busy_tone()
 		for (int i = 0; i < 3; ++i) {
 			tones[i].freq1 = 480;
 			tones[i].freq2 = 620;
-			tones[i].on_msec = 200;
-			tones[i].off_msec = 150;
-			tones[i].volume = 15000;
+			tones[i].on_msec = 250;
+			tones[i].off_msec = 250;
+			tones[i].volume = PJMEDIA_TONEGEN_VOLUME;
 		}
 		pjmedia_tonegen_play(cd->tonegen, 3, tones, 0);
-
-		if (destroyDTMFPlayerTimer) {
-			KillTimer(NULL, destroyDTMFPlayerTimer);
-		}
-		destroyDTMFPlayerTimer = SetTimer(NULL, NULL, 3000, (TIMERPROC)destroyDTMFPlayerTimerHandler);
+	} else {
+		MessageBeep(MB_ICONEXCLAMATION);
 	}
-	MessageBeep(MB_ICONEXCLAMATION);
 }

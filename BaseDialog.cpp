@@ -1,4 +1,3 @@
-﻿#include "settings.h"
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -34,8 +33,6 @@ BEGIN_MESSAGE_MAP(CBaseDialog, CDialog)
 	//{{AFX_MSG_MAP(CBaseDialog)
 	ON_WM_GETMINMAXINFO()
 	ON_WM_SIZE()
-	ON_WM_ERASEBKGND()
-	ON_WM_CTLCOLOR()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -261,41 +258,4 @@ void CBaseDialog::OnSize(UINT nType, int cx, int cy)
 	if (hDefer != NULL)
 		EndDeferWindowPos(hDefer);
 
-}
-
-
-BOOL CBaseDialog::OnEraseBkgnd(CDC* pDC)
-{
-	if (accountSettings.darkMode) {
-		CRect rc;
-		GetClientRect(&rc);
-		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
-		return TRUE;
-	}
-	return CDialog::OnEraseBkgnd(pDC);
-}
-
-HBRUSH CBaseDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	if (accountSettings.darkMode) {
-		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
-			pDC->SetTextColor(RGB(230, 230, 230));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			static CBrush brDarkBg(RGB(32, 32, 32));
-			return (HBRUSH)brDarkBg.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
-			pDC->SetTextColor(RGB(245, 245, 245));
-			pDC->SetBkColor(RGB(45, 45, 45));
-			static CBrush brDarkEdit(RGB(45, 45, 45));
-			return (HBRUSH)brDarkEdit.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_BTN) {
-			pDC->SetTextColor(RGB(230, 230, 230));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			static CBrush brDarkBg(RGB(32, 32, 32));
-			return (HBRUSH)brDarkBg.GetSafeHandle();
-		}
-	}
-	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }

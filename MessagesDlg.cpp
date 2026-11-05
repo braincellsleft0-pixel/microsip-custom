@@ -86,18 +86,11 @@ void MessagesDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MESSAGES_TAB, tabComponent);
 	DDX_Control(pDX, IDC_CALL_END, m_ButtonCall);
 	DDX_Control(pDX, IDC_END, m_ButtonEnd);
-	DDX_Control(pDX, IDC_CALL_MUTE, m_ButtonMute);
-	DDX_Control(pDX, IDC_HOLD, m_ButtonHold);
 }
 
 BOOL MessagesDlg::OnInitDialog()
 {
 	CBaseDialog::OnInitDialog();
-	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
-	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
-	if (accountSettings.darkMode) {
-		msip_set_window_dark_mode(m_hWnd, TRUE);
-	}
 
 	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
 	AutoMove(IDC_CALL_MUTE, 100, 0, 0, 0);
@@ -196,10 +189,6 @@ BOOL MessagesDlg::OnInitDialog()
 	m_ButtonEnd.m_FaceColor = _GLOBAL_DIALER_END_COLOR;
 	m_ButtonEnd.m_TextColor = RGB(255, 255, 255);
 	m_ButtonEnd.EnableWindow(m_ButtonEnd.IsWindowEnabled());
-	m_ButtonMute.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_ButtonMute.m_bTransparent = FALSE;
-	m_ButtonHold.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_ButtonHold.m_bTransparent = FALSE;
 
 	return TRUE;
 }
@@ -1114,16 +1103,9 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 	}
 	call_deinit_tonegen(call_info->id);
 
-	if (call_info->state == PJSIP_INV_STATE_DISCONNECTED) {
-		if (call_info->last_status == 486 || 
-		    call_info->last_status == 480 || 
-		    call_info->last_status == 600 || 
-		    call_info->last_status == 603 ||
-		    (call_info->last_status_text.slen > 0 && MSIP::PjToStr(&call_info->last_status_text).Find(_T("Busy")) != -1)) {
-			call_play_busy_tone();
-		} else {
+	if (accountSettings.localDTMF) {
+		if (call_info->state != PJSIP_INV_STATE_DISCONNECTED || call_info->last_status == 200) {
 			mainDlg->onPlayerPlay(MSIP_SOUND_HANGUP, 0);
-			MessageBeep(MB_OK);
 		}
 	}
 
@@ -1159,7 +1141,8 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 		}
 	}
 
-	if (call_info->state == PJSIP_INV_STATE_DISCONNECTED && (call_info->last_status == 486 || call_info->last_status == 600 || call_info->last_status == 603)) {
+	if (call_info->state == PJSIP_INV_STATE_DISCONNECTED && (call_info->last_status == 486 || call_info->last_status == 480 || call_info->last_status == 600 || call_info->last_status == 603 || (call_info->last_status_text.slen > 0 && MSIP::PjToStr(&call_info->last_status_text).Find(_T("Busy")) != -1))) {
+		call_play_busy_tone();
 		//--
 		if (!accountSettings.cmdCallBusy.IsEmpty()) {
 			CString params = numberLocal;
@@ -1272,23 +1255,11 @@ void MessagesDlg::UpdateHoldButton(pjsua_call_info *call_info)
 			buttonHold->SetCheck(TRUE);
 			buttonHold->SetWindowText(_T("Resume"));
 			if (m_hIconResume) buttonHold->SetIcon(m_hIconResume);
-			if (m_ButtonHold.m_hWnd) {
-				m_ButtonHold.SetFaceColor(RGB(11, 91, 202));
-				m_ButtonHold.SetTextColor(RGB(255, 255, 255));
-				m_ButtonHold.Invalidate();
-			}
 		}
 		else {
 			buttonHold->SetCheck(FALSE);
 			buttonHold->SetWindowText(_T("Hold"));
 			if (m_hIconHold) buttonHold->SetIcon(m_hIconHold);
-			if (m_ButtonHold.m_hWnd) {
-				COLORREF bg = accountSettings.darkMode ? RGB(45, 45, 45) : RGB(240, 240, 240);
-				COLORREF txt = accountSettings.darkMode ? RGB(220, 220, 220) : RGB(0, 0, 0);
-				m_ButtonHold.SetFaceColor(bg);
-				m_ButtonHold.SetTextColor(txt);
-				m_ButtonHold.Invalidate();
-			}
 		}
 	}
 	if (buttonHoldDialer && buttonHoldDialer->GetSafeHwnd()) {
@@ -1782,18 +1753,6 @@ void MessagesDlg::UpdateMuteButton()
 		bool isMuted = (mc && mc->isMuted);
 		btn->SetCheck(isMuted ? BST_CHECKED : BST_UNCHECKED);
 		btn->SetWindowText(isMuted ? _T("Unmute") : _T("Mute"));
-		if (m_ButtonMute.m_hWnd) {
-			if (isMuted) {
-				m_ButtonMute.SetFaceColor(RGB(11, 91, 202));
-				m_ButtonMute.SetTextColor(RGB(255, 255, 255));
-			} else {
-				COLORREF bg = accountSettings.darkMode ? RGB(45, 45, 45) : RGB(240, 240, 240);
-				COLORREF txt = accountSettings.darkMode ? RGB(220, 220, 220) : RGB(0, 0, 0);
-				m_ButtonMute.SetFaceColor(bg);
-				m_ButtonMute.SetTextColor(txt);
-			}
-			m_ButtonMute.Invalidate();
-		}
 	}
 }
 
@@ -2250,34 +2209,4 @@ void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
 		UpdateMuteButton();
 	}
 	CBaseDialog::OnTimer(nIDEvent);
-}
-HBRUSH MessagesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	if (accountSettings.darkMode) {
-		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
-			pDC->SetTextColor(RGB(230, 230, 230));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
-			pDC->SetTextColor(RGB(245, 245, 245));
-			pDC->SetBkColor(RGB(45, 45, 45));
-			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_BTN) {
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-	}
-	return CBaseDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
-BOOL MessagesDlg::OnEraseBkgnd(CDC* pDC)
-{
-	if (accountSettings.darkMode) {
-		CRect rc;
-		GetClientRect(&rc);
-		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
-		return TRUE;
-	}
-	return CBaseDialog::OnEraseBkgnd(pDC);
 }

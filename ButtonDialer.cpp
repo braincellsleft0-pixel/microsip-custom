@@ -1,4 +1,3 @@
-﻿#include "settings.h"
 /*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
@@ -116,67 +115,8 @@ void CButtonDialer::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	CDC dc;
 	dc.Attach(lpDrawItemStruct->hDC);		//Get device context object
-	CRect rt = lpDrawItemStruct->rcItem;		//Get button rect
-
-	if (accountSettings.darkMode) {
-		COLORREF bgCol = RGB(42, 42, 42);
-		COLORREF borderCol = RGB(65, 65, 65);
-		UINT state = lpDrawItemStruct->itemState;
-		if (state & ODS_SELECTED) {
-			bgCol = RGB(28, 28, 28);
-			borderCol = RGB(90, 90, 90);
-		} else if (GetCapture() == this) {
-			bgCol = RGB(60, 60, 60);
-			borderCol = RGB(110, 110, 110);
-		}
-		dc.FillSolidRect(rt, bgCol);
-		dc.Draw3dRect(rt, borderCol, borderCol);
-		dc.SetBkMode(TRANSPARENT);
-
-		CRect rtl = rt;
-		if (state & ODS_SELECTED) {
-			rtl.left += 1;
-			rtl.top += 1;
-		}
-
-		CString strTemp;
-		GetWindowText(strTemp);
-
-		int x12 = MulDiv(12, dpiX, 96);
-		int x14 = MulDiv(14, dpiX, 96);
-		int x4 = MulDiv(4, dpiX, 96);
-
-		CString letters;
-		COLORREF crOldColor;
-		if (!forceNumeric && m_map.Lookup(strTemp, letters)) {
-			rtl.left += x14;
-			crOldColor = dc.SetTextColor(RGB(240, 240, 240));
-			dc.DrawText(strTemp, rtl, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-			HFONT hOldFont = (HFONT)SelectObject(dc.m_hDC, m_FontLetters);
-			rtl.left += x12;
-			rtl.right -= x4;
-			dc.SetTextColor(RGB(170, 170, 170));
-			dc.DrawText(letters, rtl, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-			SelectObject(dc.m_hDC, hOldFont);
-			dc.SetTextColor(crOldColor);
-		} else {
-			crOldColor = dc.SetTextColor(RGB(240, 240, 240));
-			dc.DrawText(strTemp, rt, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			dc.SetTextColor(crOldColor);
-		}
-
-		if (state & ODS_FOCUS) {
-			int iChange = 3;
-			rt.top += iChange;
-			rt.left += iChange;
-			rt.right -= iChange;
-			rt.bottom -= iChange;
-			dc.DrawFocusRect(rt);
-		}
-		dc.Detach();
-		return;
-	}
-
+	CRect rt;
+	rt = lpDrawItemStruct->rcItem;		//Get button rect
 	dc.FillSolidRect(rt, dc.GetBkColor());
 	dc.SetBkMode(TRANSPARENT);
 

@@ -1,4 +1,3 @@
-﻿#include "settings.h"
 #include "LevelsSliderCtrl.h"
 #include "const.h"
 
@@ -29,8 +28,7 @@ void CLevelsSliderCtrl::OnCustomDraw(NMHDR *pNotifyStruct, LRESULT *result)
 			else {
 				rect.DeflateRect(MulDiv(3, dpiX, 96), MulDiv(6, dpiX, 96));
 			}
-			COLORREF thumbCol = accountSettings.darkMode ? RGB(110, 110, 110) : RGB(170, 170, 170);
-			pDC->FillSolidRect(&rect, thumbCol);
+			pDC->FillSolidRect(&rect, RGB(170, 170, 170));
 			*result = CDRF_SKIPDEFAULT;
 			break;
 		}
@@ -53,10 +51,13 @@ void CLevelsSliderCtrl::OnCustomDraw(NMHDR *pNotifyStruct, LRESULT *result)
 				rect.DeflateRect(2, 2);
 				selmin = (int)(((double)(selmin - min) / max * rect.Height()) + 0.5) + rect.top;
 				selmax = (int)(((double)(selmax - min) / max * rect.Height()) + 0.5) + rect.top;
-				COLORREF chBgV = accountSettings.darkMode ? RGB(45, 45, 45) : (IsActive ? GetSysColor(COLOR_WINDOW) : pDC->GetBkColor());
-				COLORREF chHlV = hot ? RGB(255, 0, 0) : (accountSettings.darkMode ? RGB(11, 110, 230) : GetSysColor(COLOR_HIGHLIGHT));
-				pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), chBgV);
-				pDC->FillSolidRect(CRect(rect.left, selmin, rect.right, selmax), chHlV);
+				if (!IsActive) {
+					pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), pDC->GetBkColor());
+				}
+				else {
+					pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), GetSysColor(COLOR_WINDOW));
+				}
+				pDC->FillSolidRect(CRect(rect.left, selmin, rect.right, selmax), hot ? RGB(255, 0, 0) : GetSysColor(COLOR_HIGHLIGHT));
 				pDC->ExcludeClipRect(rect);
 			}
 			else {
@@ -69,10 +70,13 @@ void CLevelsSliderCtrl::OnCustomDraw(NMHDR *pNotifyStruct, LRESULT *result)
 				rect.DeflateRect(2, 2);
 				selmin = (int)(((double)(selmin - min) / max * rect.Width()) + 0.5) + rect.left;
 				selmax = (int)(((double)(selmax - min) / max * rect.Width()) + 0.5) + rect.left;
-				COLORREF chBgH = accountSettings.darkMode ? RGB(45, 45, 45) : (IsActive ? GetSysColor(COLOR_WINDOW) : pDC->GetBkColor());
-				COLORREF chHlH = hot ? RGB(255, 0, 0) : (accountSettings.darkMode ? RGB(11, 110, 230) : GetSysColor(COLOR_HIGHLIGHT));
-				pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), chBgH);
-				pDC->FillSolidRect(CRect(selmin, rect.top, selmax, rect.bottom), chHlH);
+				if (!IsActive) {
+					pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), pDC->GetBkColor());
+				}
+				else {
+					pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, rect.bottom), GetSysColor(COLOR_WINDOW));
+				}
+				pDC->FillSolidRect(CRect(selmin, rect.top, selmax, rect.bottom), hot ? RGB(255, 0, 0) : GetSysColor(COLOR_HIGHLIGHT));
 				pDC->ExcludeClipRect(rect);
 			}
 			*result = CDRF_DODEFAULT | CDRF_NOTIFYPOSTPAINT;

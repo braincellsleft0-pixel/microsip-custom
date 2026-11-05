@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class CClosableTabCtrl : public CTabCtrl
 {
@@ -41,7 +41,6 @@ protected:
 	afx_msg HBRUSH CtlColor(CDC* /*pDC*/, UINT /*nCtlColor*/);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnPaint();
 	afx_msg void OnMeasureItem(int, LPMEASUREITEMSTRUCT);
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT);
 };

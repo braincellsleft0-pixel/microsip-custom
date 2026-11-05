@@ -21,8 +21,6 @@
 
 #include "AccountDlg.h"
 #include "mainDlg.h"
-
-#include "global.h"
 #include "langpack.h"
 #include "utf.h"
 #include "atlrx.h"
@@ -65,45 +63,17 @@ BOOL AccountDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	m_brDarkBg.CreateSolidBrush(RGB(32, 32, 32));
-	m_brDarkEdit.CreateSolidBrush(RGB(45, 45, 45));
-	if (accountSettings.darkMode) {
-		msip_set_window_dark_mode(m_hWnd, TRUE);
-	}
+	TranslateDialog(this->m_hWnd);
 
 	CRect rcWindow;
 	GetWindowRect(rcWindow);
 	m_szMin = rcWindow.Size();
+	m_szMin.cy = min(m_szMin.cy, 350);
 
 	CRect rcClient;
 	GetClientRect(rcClient);
 	m_szInitial = rcClient.Size();
 	m_nScrollPos = 0;
-
-	m_btnSave.SubclassDlgItem(IDOK, this);
-	m_btnCancel.SubclassDlgItem(IDCANCEL, this);
-	m_btnRemove.SubclassDlgItem(IDC_ACCOUNT_REMOVE, this);
-	m_btnSave.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_btnSave.m_bTransparent = FALSE;
-	m_btnCancel.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_btnCancel.m_bTransparent = FALSE;
-	m_btnRemove.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
-	m_btnRemove.m_bTransparent = FALSE;
-	if (accountSettings.darkMode) {
-		m_btnSave.SetFaceColor(RGB(11, 91, 202));
-		m_btnSave.SetTextColor(RGB(255, 255, 255));
-		m_btnCancel.SetFaceColor(RGB(50, 50, 50));
-		m_btnCancel.SetTextColor(RGB(230, 230, 230));
-		m_btnRemove.SetFaceColor(RGB(180, 40, 40));
-		m_btnRemove.SetTextColor(RGB(255, 255, 255));
-	} else {
-		m_btnSave.SetFaceColor(RGB(235, 235, 235));
-		m_btnSave.SetTextColor(RGB(0, 0, 0));
-		m_btnCancel.SetFaceColor(RGB(235, 235, 235));
-		m_btnCancel.SetTextColor(RGB(0, 0, 0));
-		m_btnRemove.SetFaceColor(RGB(235, 235, 235));
-		m_btnRemove.SetTextColor(RGB(0, 0, 0));
-	}
 
 	m_ctrls.clear();
 	int maxBottom = rcClient.Height();
@@ -155,8 +125,6 @@ BOOL AccountDlg::OnInitDialog()
 		SetWindowPos(NULL, 0, 0, rcWindow.Width(), newH, SWP_NOMOVE | SWP_NOZORDER);
 	}
 	UpdateControlPositions();
-
-	TranslateDialog(this->m_hWnd);
 
 	CString str;
 	CEdit* edit;
@@ -221,6 +189,10 @@ void AccountDlg::PostNcDestroy()
 }
 
 BEGIN_MESSAGE_MAP(AccountDlg, CDialog)
+	ON_WM_SIZE()
+	ON_WM_GETMINMAXINFO()
+	ON_WM_VSCROLL()
+	ON_WM_MOUSEWHEEL()
 	ON_WM_CREATE()
 	ON_WM_SYSCOMMAND()
 	ON_WM_CLOSE()
@@ -773,28 +745,6 @@ void AccountDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 	lpMMI->ptMinTrackSize.y = 300;
 }
 
-HBRUSH AccountDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	if (accountSettings.darkMode) {
-		if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC) {
-			pDC->SetTextColor(RGB(220, 220, 220));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX) {
-			pDC->SetTextColor(RGB(245, 245, 245));
-			pDC->SetBkColor(RGB(45, 45, 45));
-			return (HBRUSH)m_brDarkEdit.GetSafeHandle();
-		}
-		if (nCtlColor == CTLCOLOR_BTN) {
-			pDC->SetTextColor(RGB(220, 220, 220));
-			pDC->SetBkColor(RGB(32, 32, 32));
-			return (HBRUSH)m_brDarkBg.GetSafeHandle();
-		}
-	}
-	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-}
-
 void AccountDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	SCROLLINFO si;
@@ -861,15 +811,4 @@ BOOL AccountDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		}
 	}
 	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
-}
-
-BOOL AccountDlg::OnEraseBkgnd(CDC* pDC)
-{
-	if (accountSettings.darkMode) {
-		CRect rc;
-		GetClientRect(&rc);
-		pDC->FillSolidRect(&rc, RGB(32, 32, 32));
-		return TRUE;
-	}
-	return CDialog::OnEraseBkgnd(pDC);
 }
