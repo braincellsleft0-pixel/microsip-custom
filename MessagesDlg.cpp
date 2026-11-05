@@ -645,28 +645,25 @@ void MessagesDlg::OnChangeTab(pjsua_call_info *p_call_info, call_user_data *user
 		}
 	}
 	CRichEditCtrl* richEditList = (CRichEditCtrl*)GetDlgItem(IDC_MESSAGES_LIST);
-	CString messages = messagesContact->messages;
-	EDITSTREAM es;
-	es.dwCookie = (DWORD_PTR)&messages;
-	es.pfnCallback = MEditStreamInCallback;
-	richEditList->StreamIn(SF_RTF, es);
-	richEditList->PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	if (richEditList && richEditList->IsWindowVisible()) {
+		CString messages = messagesContact->messages;
+		EDITSTREAM es;
+		es.dwCookie = (DWORD_PTR)&messages;
+		es.pfnCallback = MEditStreamInCallback;
+		richEditList->StreamIn(SF_RTF, es);
+		richEditList->PostMessage(WM_VSCROLL, SB_BOTTOM, 0);
+	}
 	CRichEditCtrl* richEdit = (CRichEditCtrl*)GetDlgItem(IDC_MESSAGE);
-	richEdit->SetWindowText(messagesContact->message);
-	int nEnd = richEdit->GetTextLengthEx(GTL_NUMCHARS);
-	richEdit->SetSel(nEnd, nEnd);
+	if (richEdit && richEdit->IsWindowVisible()) {
+		richEdit->SetWindowText(messagesContact->message);
+		int nEnd = richEdit->GetTextLengthEx(GTL_NUMCHARS);
+		richEdit->SetSel(nEnd, nEnd);
+	}
 }
 
 void MessagesDlg::OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	OnChangeTab();
-	CButton* buttonHold = (CButton*)GetDlgItem(IDC_HOLD);
-	WINDOWINFO wndInfo;
-	buttonHold->GetWindowInfo(&wndInfo);
-	bool isButtonVisisble = wndInfo.dwStyle & WS_VISIBLE;
-	if (isButtonVisisble && buttonHold->GetCheck()) {
-		OnBnClickedHold();
-	}
 	*pResult = 0;
 }
 
@@ -674,15 +671,17 @@ void MessagesDlg::OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult)
 void MessagesDlg::OnTcnSelchangingTab(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	CRichEditCtrl* richEdit = (CRichEditCtrl*)GetDlgItem(IDC_MESSAGE);
-	CString str;
-	int len = richEdit->GetWindowTextLength();
-	LPTSTR ptr = str.GetBuffer(len);
-	richEdit->GetWindowText(ptr, len + 1);
-	str.ReleaseBuffer();
+	if (richEdit && richEdit->IsWindowVisible()) {
+		CString str;
+		int len = richEdit->GetWindowTextLength();
+		LPTSTR ptr = str.GetBuffer(len);
+		richEdit->GetWindowText(ptr, len + 1);
+		str.ReleaseBuffer();
 
-	MessagesContact* messagesContact = GetMessageContact();
-	if (messagesContact) {
-		messagesContact->message = str;
+		MessagesContact* messagesContact = GetMessageContact();
+		if (messagesContact) {
+			messagesContact->message = str;
+		}
 	}
 	*pResult = 0;
 }

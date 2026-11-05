@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "mainDlg.h"
 #include "ClosableTabCtrl.h"
 #include "VisualStylesXP.h"
@@ -144,12 +144,9 @@ void CClosableTabCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 			bool bVistaThemeActive = IsVistaThemeActive();
 			CRect rcCloseButton;
 			GetCloseButtonRect(iTab, rcItem, rcCloseButton, iTab == GetCurSel(), bVistaThemeActive);
-			rcCloseButton.InflateRect(6, 6);
+			rcCloseButton.InflateRect(5, 5);
 
-			CRect rcRightEdge = rcItem;
-			rcRightEdge.left = rcRightEdge.right - 26;
-
-			if (rcCloseButton.PtInRect(point) || rcRightEdge.PtInRect(point)) {
+			if (rcCloseButton.PtInRect(point)) {
 				iTabClose = iTab;
 				GetParent()->SendMessage(UM_CLOSETAB, (WPARAM)iTab);
 				return;

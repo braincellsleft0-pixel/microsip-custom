@@ -28,5 +28,43 @@ Source: "Release\microsip.exe"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{autoprograms}\MicroSIP"; Filename: "{app}\microsip.exe"
 Name: "{autodesktop}\MicroSIP"; Filename: "{app}\microsip.exe"; Tasks: desktopicon
 
+[Registry]
+; Applications registration
+Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe\SupportedProtocols"; ValueType: string; ValueName: "tel"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe\SupportedProtocols"; ValueType: string; ValueName: "sip"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe\SupportedProtocols"; ValueType: string; ValueName: "callto"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\microsip.exe"" ""%1"""; Flags: uninsdeletekey
+
+; MicroSIP.Url progid
+Root: HKCU; Subkey: "Software\Classes\MicroSIP.Url"; ValueType: string; ValueName: ""; ValueData: "URL:MicroSIP Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\MicroSIP.Url"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\MicroSIP.Url\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\microsip.exe"" ""%1"""; Flags: uninsdeletekey
+
+; Protocol handlers
+Root: HKCU; Subkey: "Software\Classes\tel"; ValueType: string; ValueName: ""; ValueData: "URL:tel Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tel"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tel"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tel\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\microsip.exe"" ""%1"""; Flags: uninsdeletekey
+
+Root: HKCU; Subkey: "Software\Classes\sip"; ValueType: string; ValueName: ""; ValueData: "URL:sip Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\sip"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\sip"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\sip\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\microsip.exe"" ""%1"""; Flags: uninsdeletekey
+
+Root: HKCU; Subkey: "Software\Classes\callto"; ValueType: string; ValueName: ""; ValueData: "URL:callto Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\callto"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\callto"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\callto\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\microsip.exe"" ""%1"""; Flags: uninsdeletekey
+
+; Capabilities & RegisteredApplications
+Root: HKCU; Subkey: "Software\MicroSIP\Capabilities"; ValueType: string; ValueName: "ApplicationName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\MicroSIP\Capabilities"; ValueType: string; ValueName: "ApplicationDescription"; ValueData: "MicroSIP SIP Softphone"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\MicroSIP\Capabilities\UrlAssociations"; ValueType: string; ValueName: "tel"; ValueData: "MicroSIP.Url"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\MicroSIP\Capabilities\UrlAssociations"; ValueType: string; ValueName: "sip"; ValueData: "MicroSIP.Url"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\MicroSIP\Capabilities\UrlAssociations"; ValueType: string; ValueName: "callto"; ValueData: "MicroSIP.Url"; Flags: uninsdeletekey
+
+Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: string; ValueName: "MicroSIP"; ValueData: "Software\MicroSIP\Capabilities"; Flags: uninsdeletevalue
+
 [Run]
 Filename: "{app}\microsip.exe"; Description: "{cm:LaunchProgram,MicroSIP}"; Flags: nowait postinstall skipifsilent
