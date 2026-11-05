@@ -92,15 +92,9 @@ BOOL MessagesDlg::OnInitDialog()
 {
 	CBaseDialog::OnInitDialog();
 
-	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 0);
-	AutoMove(IDC_LAST_CALL, 100, 0, 0, 0);
-	AutoMove(IDC_CLOSE_ALL, 100, 0, 0, 0);
-	AutoMove(IDC_CONFERENCE, 100, 0, 0, 0);
-	AutoMove(IDC_TRANSFER, 100, 0, 0, 0);
-	AutoMove(IDC_HOLD, 100, 0, 0, 0);
+	AutoMove(IDC_MESSAGES_TAB, 0, 0, 100, 100);
 	AutoMove(IDC_END, 100, 0, 0, 0);
-	AutoMove(IDC_MESSAGES_LIST, 0, 0, 100, 80);
-	AutoMove(IDC_MESSAGE, 0, 80, 100, 20);
+	SetTimer(101, 1000, NULL);
 	lastCall = NULL;
 	tab = &tabComponent;
 
@@ -216,6 +210,7 @@ BEGIN_MESSAGE_MAP(MessagesDlg, CBaseDialog)
 	ON_WM_MOVE()
 	ON_WM_SIZE()
 	ON_WM_DESTROY()
+	ON_WM_TIMER()
 	ON_COMMAND(ID_CLOSEALLTABS, OnCloseAllTabs)
 	ON_COMMAND(ID_GOTOLASTTAB, OnGoToLastTab)
 	ON_COMMAND(ID_COPY, OnCopy)
@@ -449,7 +444,7 @@ MessagesContact* MessagesDlg::AddTab(CString number, BOOL activate, pjsua_call_i
 		}
 		user_data->CS.Unlock();
 	}
-	tabName.Format(_T("   %s  "), tabName);
+	CString lineLabel; lineLabel.Format(_T("Line %d"), (exists == -1 ? tab->GetItemCount() : exists) + 1); tabName.Format(_T("   %s  "), lineLabel);
 	TCITEM item;
 	item.pszText = tabName.GetBuffer();
 	item.cchTextMax = 0;
@@ -528,7 +523,7 @@ void MessagesDlg::OnChangeTab(pjsua_call_info *p_call_info, call_user_data *user
 		messagesContact->hasNewMessages = false;
 		UpdateTabIcon(messagesContact, tab->GetCurSel(), p_call_info, user_data);
 	}
-	SetWindowText(messagesContact->name);
+	int curLine = (tab ? tab->GetCurSel() : 0) + 1; CString lineTitle; lineTitle.Format(_T("Line %d: %s"), curLine, messagesContact->name); SetWindowText(lineTitle);
 
 	if (messagesContact->callId != -1) {
 		UpdateCallButton(TRUE, p_call_info, user_data);
@@ -2044,4 +2039,18 @@ void MessagesDlg::UpdateTabIcon(MessagesContact* messagesContact, int tabIndex, 
 	item.mask = TCIF_IMAGE;
 	item.iImage = icon;
 	tab->SetItem(tabIndex, &item);
+}
+
+void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 101) {
+		int sec = GetCallDuration();
+		int curLine = (tab ? tab->GetCurSel() : 0) + 1;
+		if (sec >= 0) {
+			CString title;
+			title.Format(_T("Line %d (%02d:%02d)"), curLine, sec / 60, sec % 60);
+			SetWindowText(title);
+		}
+	}
+	CBaseDialog::OnTimer(nIDEvent);
 }
