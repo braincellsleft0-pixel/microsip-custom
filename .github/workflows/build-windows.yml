@@ -87,17 +87,17 @@ jobs:
           name: MicroSIP-packages
           path: |
             pjproject/microsip/Release/microsip.exe
-            MicroSIP-Minimalist-Setup.exe
+            pjproject/microsip/MicroSIP-Minimalist-Setup.exe
 
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
-        if: always()
+        if: success()
         with:
           tag_name: v1.0.0-minimal
           name: "MicroSIP Minimalist Edition v1.0.0"
-          body: "Official installer (Setup.exe) and portable executable for MicroSIP with ultra-compact 2-row multi-line call dialog and active header timer."
+          body: "Official Windows Setup installer (MicroSIP-Minimalist-Setup.exe) and portable executable for MicroSIP with ultra-compact 2-row multi-line call dialog and active header timer."
           files: |
-            MicroSIP-Minimalist-Setup.exe
+            pjproject/microsip/MicroSIP-Minimalist-Setup.exe
             pjproject/microsip/Release/microsip.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
