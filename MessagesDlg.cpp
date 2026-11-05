@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2011-2024 MicroSIP (http://www.microsip.org)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1884,13 +1884,18 @@ int MessagesDlg::GetCallDuration(pjsua_call_id *call_id)
 	pjsua_call_info call_info;
 	int i = 0;
 	int count = 0;
+	if (!tab) {
+		return -1;
+	}
 	while (i < tab->GetItemCount()) {
 		MessagesContact* messagesContact = GetMessageContact(i);
-		if (messagesContact->callId != -1) {
+		if (messagesContact && messagesContact->callId != -1) {
 			if (pjsua_var.state == PJSUA_STATE_RUNNING && pjsua_call_get_info(messagesContact->callId, &call_info) == PJ_SUCCESS) {
 				if (call_info.state == PJSIP_INV_STATE_CONFIRMED) {
 					duration = msip_get_duration(&call_info.connect_duration);
-					*call_id = messagesContact->callId;
+					if (call_id) {
+						*call_id = messagesContact->callId;
+					}
 					count++;
 				}
 			}
@@ -1898,7 +1903,9 @@ int MessagesDlg::GetCallDuration(pjsua_call_id *call_id)
 		i++;
 	}
 	if (count > 1) {
-		*call_id = PJSUA_INVALID_ID;
+		if (call_id) {
+			*call_id = PJSUA_INVALID_ID;
+		}
 		duration = count;
 	}
 	return duration;
@@ -2044,7 +2051,8 @@ void MessagesDlg::UpdateTabIcon(MessagesContact* messagesContact, int tabIndex, 
 void MessagesDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == 101) {
-		int sec = GetCallDuration();
+		pjsua_call_id cid = PJSUA_INVALID_ID;
+		int sec = GetCallDuration(&cid);
 		int curLine = (tab ? tab->GetCurSel() : 0) + 1;
 		if (sec >= 0) {
 			CString title;
