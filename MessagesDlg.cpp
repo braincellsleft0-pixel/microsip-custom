@@ -1118,7 +1118,9 @@ void MessagesDlg::OnEndCall(pjsua_call_info *call_info, call_user_data *user_dat
 		}
 	}
 	else {
-		mainDlg->pageDialer->Clear();
+		if (!GetCallsCount()) {
+			mainDlg->pageDialer->Clear();
+		}
 	}
 	mainDlg->pageDialer->SetName();
 
@@ -1188,7 +1190,7 @@ void MessagesDlg::UpdateCallButton(BOOL active, pjsua_call_info *call_info, call
 	}
 #endif
 	GetDlgItem(IDC_END)->ShowWindow(SW_SHOW);
-	GetDlgItem(IDC_END)->EnableWindow(active ? TRUE : FALSE);
+	GetDlgItem(IDC_END)->EnableWindow(TRUE);
 	UpdateHoldButton(call_info);
 	UpdateRecButton(user_data);
 	if (!active) {
@@ -1985,10 +1987,17 @@ void MessagesDlg::OnDisconnect()
 void MessagesDlg::OnBnClickedEnd()
 {
 	MessagesContact* messagesContact = GetMessageContact();
-	if (!messagesContact || messagesContact->callId == -1) {
+	if (!messagesContact) {
 		return;
 	}
-	msip_call_end(messagesContact->callId);
+	if (messagesContact->callId != -1) {
+		msip_call_end(messagesContact->callId);
+	} else {
+		int curSel = tab ? tab->GetCurSel() : -1;
+		if (curSel != -1) {
+			CloseTab(curSel);
+		}
+	}
 }
 
 void MessagesDlg::OnCloseAllTabs()

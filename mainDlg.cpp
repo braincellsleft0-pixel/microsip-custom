@@ -4030,22 +4030,46 @@ bool CmainDlg::GotoTab(int i, CTabCtrl* tab) {
 
 void CmainDlg::DialNumberFromCommandLine(CString params) {
 	pjsua_acc_info info;
+	bool isUri = false;
 	if (params.Mid(0, 4).CompareNoCase(_T("tel:")) == 0 || params.Mid(0, 4).CompareNoCase(_T("sip:")) == 0) {
 		params = params.Mid(4);
+		isUri = true;
 	}
 	else if (params.Mid(0, 7).CompareNoCase(_T("callto:")) == 0) {
 		params = params.Mid(7);
+		isUri = true;
 	}
 	else if (params.Mid(0, 8).CompareNoCase(_T("dialpad:")) == 0) {
 		params = params.Mid(8);
+		isUri = true;
 	}
 	else if (params.Mid(0, 5).CompareNoCase(_T("dial:")) == 0) {
 		params = params.Mid(5);
+		isUri = true;
 	}
 	if (params.Mid(0, 2) == _T("//")) {
 		params = params.Mid(2);
 		if (params.Right(1) == _T("/")) {
 			params = params.Mid(0, params.GetLength() - 1);
+		}
+	}
+	if (isUri) {
+		int sc = params.Find(_T(';'));
+		if (sc != -1) {
+			params = params.Left(sc);
+		}
+		int qm = params.Find(_T('?'));
+		if (qm != -1) {
+			params = params.Left(qm);
+		}
+		params.Replace(_T("%20"), _T(""));
+		params.Replace(_T("%2B"), _T("+"));
+		params.Replace(_T("%2b"), _T("+"));
+		if (params.Find(_T('@')) == -1) {
+			params.Remove(_T(' '));
+			params.Remove(_T('-'));
+			params.Remove(_T('('));
+			params.Remove(_T(')'));
 		}
 	}
 	int pos = params.Find(_T("/account:"));
@@ -4159,11 +4183,28 @@ void CmainDlg::DialNumber(CString params)
 {
 	CString number;
 	CString message;
+	params.Trim();
 	int i = params.Find(_T(" "));
 	if (i != -1) {
-		number = params.Mid(0, i);
-		message = params.Mid(i + 1);
-		message.Trim();
+		CString rest = params.Mid(i + 1);
+		rest.Trim();
+		bool looksLikePhoneNumber = true;
+		for (int c = 0; c < rest.GetLength(); ++c) {
+			TCHAR ch = rest[c];
+			if (!_istdigit(ch) && ch != _T('-') && ch != _T(' ') && ch != _T('(') && ch != _T(')')) {
+				looksLikePhoneNumber = false;
+				break;
+			}
+		}
+		if (looksLikePhoneNumber) {
+			number = params;
+			number.Remove(_T(' '));
+			number.Remove(_T('-'));
+			message.Empty();
+		} else {
+			number = params.Mid(0, i);
+			message = rest;
+		}
 	}
 	else {
 		number = params;

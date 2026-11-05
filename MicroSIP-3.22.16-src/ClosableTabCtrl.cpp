@@ -416,8 +416,8 @@ int CClosableTabCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CClosableTabCtrl::InternalInit()
 {
 	ModifyStyle(0, TCS_OWNERDRAWFIXED);
-	SetMinTabWidth(82);
-	SetPadding(CSize(12, 3));
+	SetMinTabWidth(96);
+	SetPadding(CSize(22, 3));
 
 #if 1
 	// Under Vista Aero, all tab controls get by default the TCS_HOTTRACK

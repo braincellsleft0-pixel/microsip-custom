@@ -30,12 +30,8 @@
 #include "Markup.h"
 
 enum {
-	MSIP_CALLS_COL_NAME,
-	MSIP_CALLS_COL_NUMBER,
-	MSIP_CALLS_COL_TIME,
-	MSIP_CALLS_COL_DURATION,
-	MSIP_CALLS_COL_INFO,
-};
+	MSIP_CALLS_COL_NAME, Translate(_T("Name")), LVCFMT_LEFT, (accountSettings.callsWidth0 > 0 && accountSettings.callsWidth0 != 160) ? accountSettings.callsWidth0 : 135);
+	list->InsertColumn(MSIP_CALLS_COL_NUMBER, Translate(_T("Number")), LVCFMT_LEFT, (accountSettings.callsWidth1 >= 130) ? accountSettings.callsWidth1 : 130);
 
 Calls::Calls(CWnd* pParent /*=NULL*/)
 	: CBaseDialog(Calls::IDD, pParent)
