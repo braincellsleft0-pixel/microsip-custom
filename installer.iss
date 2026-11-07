@@ -14,6 +14,9 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
+CloseApplications=yes
+CloseApplicationsFilter=microsip.exe
+RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -29,6 +32,9 @@ Name: "{autoprograms}\MicroSIP"; Filename: "{app}\microsip.exe"
 Name: "{autodesktop}\MicroSIP"; Filename: "{app}\microsip.exe"; Tasks: desktopicon
 
 [Registry]
+; Root MicroSIP key
+Root: HKCU; Subkey: "Software\MicroSIP"; Flags: uninsdeletekey
+
 ; Applications registration
 Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "MicroSIP"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\Applications\microsip.exe\SupportedProtocols"; ValueType: string; ValueName: "tel"; ValueData: ""; Flags: uninsdeletekey
@@ -66,5 +72,21 @@ Root: HKCU; Subkey: "Software\MicroSIP\Capabilities\UrlAssociations"; ValueType:
 
 Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: string; ValueName: "MicroSIP"; ValueData: "Software\MicroSIP\Capabilities"; Flags: uninsdeletevalue
 
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "{userappdata}\MicroSIP"
+Type: filesandordirs; Name: "{localappdata}\MicroSIP"
+
 [Run]
 Filename: "{app}\microsip.exe"; Description: "{cm:LaunchProgram,MicroSIP}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    DelTree(ExpandConstant('{app}'), True, True, True);
+    DelTree(ExpandConstant('{userappdata}\MicroSIP'), True, True, True);
+    DelTree(ExpandConstant('{localappdata}\MicroSIP'), True, True, True);
+  end;
+end;
